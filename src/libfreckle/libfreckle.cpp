@@ -27,6 +27,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "DotStore.h"
+
 #define BASEPAIRS	4
 
 typedef unsigned int u32;
@@ -46,17 +48,6 @@ const char *Bases="ACGT";
 
 /* this gives us a maximum ktuple size of 16 for 4 base pairs. But will work well on 32 bit systems */
 typedef u32 TupleID;
-
-/* find the index of the first occurence of character c in the passed in string */
-// int getstringindex(const char *str, char c)
-// {
-// 	printf("string: %s\nchar %c\n",str,c);
-// 
-// 	int i=0;
-// 	while(str[i] && str[i]!=c)
-// 		i++;
-// 	return i;
-// }
 
 /*
 ** ipow(x,n)
@@ -82,8 +73,7 @@ TupleID getTupleID(const char *tuple, int len)
 
 	for(int i=0; i<len; i++, tuple++)
 	{
- 		index=strchr(Bases, (int)*tuple)-Bases;			// get the index in Bases of where this character appears
-//		index=getstringindex(Bases,*tuple);			// get the index in Bases of where this character appears
+		index=strchr(Bases, (int)*tuple)-Bases;			// get the index in Bases of where this character appears
 		assert(index>=0 && index<(int)strlen(Bases));		// it should be within range
 		assert((index & BASE_MASK) == index);			// it shouldn't have any extra bits
 		
@@ -113,7 +103,7 @@ TupleID getTupleID(const char *tuple, int len)
 int **buildMappingTables( const char *sequence, int ktuplesize )
 {
 	int seqlen=strlen(sequence);
-	assert(strlen>0);
+	assert(seqlen>0);
 
 	int ktuplearraysize=ipow(BASEPAIRS,ktuplesize);
 	int darraysize=seqlen-ktuplesize+1;
@@ -171,14 +161,84 @@ void freeMappingTables(int **tables)
 }
 
 /*
+** sum function just returns the sum of a buffer of ints
+*/
+int sum(int *buffer, int length)
+{
+	int sum=0;
+
+	for(int i=0; i<length; i++)
+		sum+=buffer[i];
+
+	return sum;
+}
+
+/*
+** matchAboveThreshold
+** ===================
+** given two sequences, seq1 and seq2, and positions in those sequences p1 and p2, compute how long the
+** two sequences match for. this assumes that a length of 'k' matches already (the tuple size)
+*/
+int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int threshold, int window)
+{
+	assert(window>0);
+	assert(k>0);
+	int ringbuf[window];
+	
+	memset(ringbuf,0,sizeof(ringbuf));
+
+	int matchlength=k;
+
+	const char *s1=seq1+p1+k;
+	const char *s2=seq2+p2+k;
+	
+	while((sum(ringbuf,window)<=threshold) && *s1 && *s2 )
+		ringbuf[matchlength++%window] = *s1++==*s2++?0:1;		//compare s1 and s2 characters. assign 1 to the relevant ringbuff entry if they're not matched, 0 if they are
+		
+	return matchlength-(*s1 && *s2 ? 1 : 0);
+}
+
+
+/*
 ** doComparison
 ** ============
 ** compare one sequence against the table constructed sequence
 */
 void doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize)
 {
+	int *C, *D;
+	DotStore *dotstore=new DotStore();
+	C=tables[0];
+	D=tables[1];
+
+	int newseqlen=strlen(newsequence);
+	assert(newseqlen>0);
+
+	int ktuplearraysize=ipow(BASEPAIRS,ktuplesize);
+	int darraysize=newseqlen-ktuplesize+1;
+
+	// go through each k-tuple on the newsequence
+	const char *tuple=newsequence;
+	int tupleid=0;
+	for(int i=0; i<darraysize; i++, tuple++)
+	{
+		// first we get the id of this tuple
+		tupleid=getTupleID(tuple,ktuplesize);
+		
+		//now we look it up in the table C to find the last occurance, and move backwards 
+		//through the linked list expressed in table D
+		for(int position=C[tupleid-1]; position; position=D[position-1])
+			// so position is a tuple position match in the tabled sequence
+			// now we search forward to see how long the match is (with threshold)
+			dotstore->AddDot(position-1,i,matchAboveThreshold(tablesequence,position-1,newsequence,i,ktuplesize,1,10));
+	}
+
+	printf("Dotstore %d\n",dotstore->GetNum());
+	dotstore->Dump();
 	
+	delete dotstore;
 }
+
 
 /*
 ** getInfo
@@ -201,11 +261,19 @@ void getInfo()
 	//buildMappingTables("AGCTCGATCGAGTCTCGAGTAG",2);
 
 	//buildMappingTables("GATTACAATTAACTGATCGATCGTAGCTACATGCTGACTACTGACTGCATGCATGACTGCATGCATTGACTGACTGCATGACTGCATG",8);
-	int **pt=buildMappingTables("AGCTCGATCGAGTCTCGAGTAG",2);
+	const char *seq1="GATTACAATTAACTGATCGATCGTAGCTACATGCTGACTACTGACTGCATGCATGACTGCATGCATTGACTGACTGCATGACTGCATG";
+	const char *seq2="AGCTCGATCGAGTCTCGAGTAG";
+	int **pt=buildMappingTables(seq1,2);
 
 	printf("%d - %d\n",(int)pt[0], (int)pt[1]);
 
+	doComparison(pt, seq1, seq2, 2);
+
 	freeMappingTables(pt);
+
+	// k, thresh,wind
+	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,1,0,6) );
+	printf("%s\n%s\n",seq1+83,seq2+1);
 }
 
 

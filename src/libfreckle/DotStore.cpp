@@ -1,6 +1,7 @@
 #include "DotStore.h"
 #include <assert.h>
 #include <memory.h>
+#include <stdio.h>
 
 //construct
 DotStore::DotStore()
@@ -118,6 +119,12 @@ void DotStore::DelDot(int index)
 	numdots--;
 }
 
+void DotStore::Dump()
+{
+	printf("i\tx\ty\tlen\n=\t=\t=\t===\n");
+	for(int i=0; i<numdots; i++)
+		printf("%d\t%d\t%d\t%d\n",i,GetDot(i)->x,GetDot(i)->y,GetDot(i)->length);
+}
 
 
 

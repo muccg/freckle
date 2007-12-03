@@ -52,6 +52,9 @@ public:
 		// none found
 		return NULL;
 	}
+
+	// Dump out the contents. For debug mainly.
+	void Dump();
 };
 
 #endif
