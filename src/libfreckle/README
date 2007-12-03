@@ -1,0 +1,22 @@
+libfreckle
+==========
+
+Code by Crispin Wellington <cwellington@ccg.murdoch.edu.au>
+
+This is a library to implement the Yue Huang and Ling Zhang 2004 dot plot algorithm outlined in their
+2004 paper, "Rapid and sensitive dot-matrix methods for genome analysis", Bioinformatics 20(4) Oxford University Press.
+
+Approach
+--------
+
+1. Storage of results
+
+In order to trade off between speed and storage in an efficient manner, the results are stored in objects of the class
+DotStore. DotStore contains a doubly linked list of DotStorageChunks. A DotStorageChunk is an array style storage of Dots.
+In this way it is a continuous block of RAM with little overhead. Access is rapid and through DotStore the size can grow
+and shrink. As it stands, DotStorageChunk contains 8192 Dots. LIMITATIONS: as its coded, little attention is paid to deleting
+or optimising deletions of dots in the results. This can be coded, but is intentionally left minimal (and slow) because
+a typical use pattern will be to fill the storage with a (very) large number of dots, and then once the dots are plotted,
+delete the entire structure at once.
+
+2. 
