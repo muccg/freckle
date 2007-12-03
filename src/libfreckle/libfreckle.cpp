@@ -27,27 +27,10 @@
 #include <string.h>
 #include <assert.h>
 
-#include "DotStore.h"
+#include "libfreckle.h"
 
-#define BASEPAIRS	4
-
-typedef unsigned int u32;
-typedef unsigned long long int u64;
 
 extern "C" {
-
-
-
-
-const char *Bases="ACGT";
-#define BASE_BIT_SHIFT	2
-#define BASE_MASK 3
-
-/* this gives us a maximum ktuple size of 32 for 4 base pairs. But will probably be slower on a 32-bit system */
-//typedef u64 TupleID;
-
-/* this gives us a maximum ktuple size of 16 for 4 base pairs. But will work well on 32 bit systems */
-typedef u32 TupleID;
 
 /*
 ** ipow(x,n)
@@ -204,8 +187,11 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 ** ============
 ** compare one sequence against the table constructed sequence
 */
-void doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize)
+DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch)
 {
+	assert(mismatch<window);
+	assert(window>=ktuplesize);
+
 	int *C, *D;
 	DotStore *dotstore=new DotStore();
 	C=tables[0];
@@ -230,15 +216,21 @@ void doComparison(int **tables, const char *tablesequence, const char *newsequen
 		for(int position=C[tupleid-1]; position; position=D[position-1])
 			// so position is a tuple position match in the tabled sequence
 			// now we search forward to see how long the match is (with threshold)
-			dotstore->AddDot(position-1,i,matchAboveThreshold(tablesequence,position-1,newsequence,i,ktuplesize,1,10));
+			dotstore->AddDot(position-1,i,matchAboveThreshold(tablesequence,position-1,newsequence,i,ktuplesize,mismatch,window));
 	}
-
-	printf("Dotstore %d\n",dotstore->GetNum());
-	dotstore->Dump();
 	
-	delete dotstore;
+	return dotstore;
 }
 
+/*
+** makeDotComparison
+** =================
+** do a complete comparison including building table and comparing. returns the dotstore.
+*/
+DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch)
+{
+	return doComparison(buildMappingTables(seq1,ktuplesize), seq1, seq2, ktuplesize, window, mismatch);
+}
 
 /*
 ** getInfo
@@ -267,7 +259,7 @@ void getInfo()
 
 	printf("%d - %d\n",(int)pt[0], (int)pt[1]);
 
-	doComparison(pt, seq1, seq2, 2);
+	doComparison(pt, seq1, seq2, 2,0,10);
 
 	freeMappingTables(pt);
 
