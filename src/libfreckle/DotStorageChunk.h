@@ -35,6 +35,21 @@ public:
 	void LinkBefore(DotStorageChunk *insert);
 	void LinkAfter(DotStorageChunk *insert);
 
+	inline int GetDotX(int num)
+	{
+		return dots[num].x;
+	}
+
+	inline int GetDotY(int num)
+	{
+		return dots[num].y;
+	}
+
+	inline int GetDotLength(int num)
+	{
+		return dots[num].length;
+	}
+
 	inline void	SetNext(DotStorageChunk *chunk)
 	{
 		next=chunk;

@@ -5,6 +5,8 @@ LDFLAGS=-shared -Wl,-soname,test.so -lc
 
 all: test.so
 
+tests: runtests
+
 test.o: test.c
 	$(CPP) $(CPPFLAGS) -c test.c
 
@@ -14,6 +16,9 @@ test.so: test.o
 
 DotStorageChunk.o: DotStorageChunk.cpp DotStorageChunk.h
 	$(CPP) $(CPPFLAGS) -c DotStorageChunk.cpp
+
+DotStore.o: DotStore.cpp DotStore.h
+	$(CPP) $(CPPFLAGS) -c DotStore.cpp
 
 
 #
@@ -25,8 +30,15 @@ testDotStorageChunk.cpp: testDotStorageChunk.h DotStorageChunk.cpp DotStorageChu
 testDotStorageChunk: testDotStorageChunk.cpp DotStorageChunk.o
 	$(CPP) -I./ -o testDotStorageChunk testDotStorageChunk.cpp DotStorageChunk.o
 
-runtests: testDotStorageChunk
+testDotStore.cpp: testDotStore.h DotStore.cpp DotStore.h
+	./cxxtestgen.pl --error-printer -o testDotStore.cpp testDotStore.h
+
+testDotStore: testDotStore.cpp DotStore.o DotStorageChunk.o
+	$(CPP) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o
+
+runtests: testDotStorageChunk testDotStore
 	./testDotStorageChunk
+	./testDotStore
 
 
 

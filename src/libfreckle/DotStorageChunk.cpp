@@ -14,9 +14,11 @@ DotStorageChunk::~DotStorageChunk()
 
 }
 
-Dot *DotStorageChunk::GetDot(int num)
+Dot *DotStorageChunk::GetDot(int index)
 {
-	return &dots[num];
+	assert(index>=0);
+	assert(index<DOTSTORAGECHUNKSIZE);
+	return &dots[index];
 }
 
 void DotStorageChunk::AddDot(int x, int y, int length)
