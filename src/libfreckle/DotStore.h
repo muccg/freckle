@@ -19,6 +19,8 @@ public:
 	
 	void AddDot(int x, int y, int len);
 	Dot *GetDot(int index);
+	void DelDot(int index);
+
 	inline int GetDotX(int index)
 	{
 		return GetDot(index)->x;
@@ -32,6 +34,11 @@ public:
 	inline int GetDotLength(int index)
 	{
 		return GetDot(index)->length;
+	}
+
+	inline int GetNum()
+	{
+		return numdots;
 	}
 
 	// find first non empty chunk

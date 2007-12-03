@@ -15,7 +15,13 @@ DotStore::DotStore()
 //destruct
 DotStore::~DotStore()
 {
-
+	// free all allocated chunks
+	DotStorageChunk *next=NULL;
+	for(DotStorageChunk *chunk=head; chunk; chunk=next)
+	{
+		next=chunk->GetNext();			// gotta save this 
+		delete chunk;
+	}
 }
 
 void DotStore::AddDotStorageChunk()
@@ -81,7 +87,7 @@ Dot *DotStore::GetDot(int index)
 	DotStorageChunk *chunk=head;
 	
 	// return the pointer to dot with index 'index'
-	while(index>chunk->GetNum())
+	while(index>=chunk->GetNum())
 	{
 		index-=chunk->GetNum();
 		chunk=chunk->GetNext();
@@ -90,6 +96,26 @@ Dot *DotStore::GetDot(int index)
 
 	//so chunk now contains the relevant dot. return it
 	return chunk->GetDot(index);
+}
+
+void DotStore::DelDot(int index)
+{
+	assert(index>=0);
+	assert(head && tail && numdots && index<numdots);		//no dots here, or index too high or too low
+
+	DotStorageChunk *chunk=head;
+	
+	// find the dot with index 'index'
+	while(index>=chunk->GetNum())
+	{
+		index-=chunk->GetNum();
+		chunk=chunk->GetNext();
+		assert(chunk);			// if we run out of chunks something horrid has happened. Because above we tested if index was too high
+	}
+
+	//so chunk now contains the relevant dot. lets delete it
+	chunk->DelDot(index);
+	numdots--;
 }
 
 

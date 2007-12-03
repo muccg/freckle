@@ -3,15 +3,17 @@ CC=gcc
 CPPFLAGS=-fPIC -Wall
 LDFLAGS=-shared -Wl,-soname,test.so -lc
 
-all: test.so
+PARTS=libfreckle.o DotStore.o DotStorageChunk.o
+
+all: libfreckle.so
 
 tests: runtests
 
-test.o: test.c
-	$(CPP) $(CPPFLAGS) -c test.c
+libfreckle.o: libfreckle.cpp
+	$(CPP) $(CPPFLAGS) -c libfreckle.cpp
 
-test.so: test.o
-	$(CPP) $(CPPFLAGS) $(LDFLAGS) test.o -o test.so
+libfreckle.so: $(PARTS)
+	$(CPP) $(CPPFLAGS) $(LDFLAGS) $(PARTS) -o libfreckle.so
 
 
 DotStorageChunk.o: DotStorageChunk.cpp DotStorageChunk.h
