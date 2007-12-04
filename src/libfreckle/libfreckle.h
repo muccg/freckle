@@ -6,7 +6,8 @@
 extern "C" {
 
 const char *Bases="ACGT";
-
+const char TranslateUniversal[]="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV-Y-YSSSS-CWCLFLF";
+	
 #define BASEPAIRS	4
 #define BASE_BIT_SHIFT	2
 #define BASE_MASK 3

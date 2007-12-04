@@ -162,7 +162,7 @@ int sum(int *buffer, int length)
 ** given two sequences, seq1 and seq2, and positions in those sequences p1 and p2, compute how long the
 ** two sequences match for. this assumes that a length of 'k' matches already (the tuple size)
 */
-int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int threshold, int window)
+int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int mismatch, int window)
 {
 	assert(window>0);
 	assert(k>0);
@@ -175,10 +175,11 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 	const char *s1=seq1+p1+k;
 	const char *s2=seq2+p2+k;
 	
-	while((sum(ringbuf,window)<=threshold) && *s1 && *s2 )
-		ringbuf[matchlength++%window] = *s1++==*s2++?0:1;		//compare s1 and s2 characters. assign 1 to the relevant ringbuff entry if they're not matched, 0 if they are
+	while((sum(ringbuf,window)<=mismatch) && *s1 && *s2 )
+		ringbuf[matchlength++%window] = *s1++==*s2++?0:1;		//compare s1 and s2 characters. assign 1 to the relevant 
 		
-	return matchlength-(*s1 && *s2 ? 1 : 0);
+	return matchlength-((sum(ringbuf,window)<=mismatch)?0:1);
+		
 }
 
 
@@ -237,6 +238,52 @@ DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, 
 	return doComparison(buildMappingTables(seq1,ktuplesize), seq1, seq2, ktuplesize, window, mismatch, minmatch);
 }
 
+/*
+** translateSequence
+** =================
+** translate a DNA sequence into an amino acid sequence. Returns three sequences which correspond to the
+** three reading frames of the original sequence
+*/
+char **convertSequence(const char *sequence)
+{
+	int seqlen=strlen(sequence);
+
+	//translation table
+	TupleID codetablelen=strlen(TranslateUniversal);
+	assert(codetablelen==64);
+
+	// storage area for results. 3 strings. leach of length  floor(seqlen/3). Each is zero terminated including the initial list
+	char **results=new char *[4];
+	memset(results,0,sizeof(char*)*4);
+	for(int i=0; i<3; i++)
+	{
+		results[i]=new char[seqlen/3+1];
+		memset(results[i],0,sizeof(char)*(seqlen/3+1));
+	}
+
+	for(int i=0; i<seqlen/3; i++)
+		for (int offset=0; offset<3; offset++)
+		{
+			TupleID id=getTupleID(sequence+i*3+offset, 3)-1;
+			assert(id>=0);
+			assert(id<codetablelen);
+			results[offset][i]=TranslateUniversal[id];
+		}
+
+	return results;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 ** helper functions for the higher level language to read the dotstore
@@ -270,15 +317,38 @@ void getInfo()
 	//buildMappingTables("AGCTCGATCGAGTCTCGAGTAG",2);
 
 	//buildMappingTables("GATTACAATTAACTGATCGATCGTAGCTACATGCTGACTACTGACTGCATGCATGACTGCATGCATTGACTGACTGCATGACTGCATG",8);
-	const char *seq1="GATTACAATTAACTGATCGATCGTAGCTACATGCTGACTACTGACTGCATGCATGACTGCATGCATTGACTGACTGCATGACTGCATG";
-	const char *seq2="AGCTCGATCGAGTCTCGAGTAG";
-	int **pt=buildMappingTables(seq1,2);
+	if(0)
+	{
+		const char *seq1="GATTACAATTAACTGATCGATCGTAGCTACATGCTGACTACTGACTGCATGCATGACTGCATGCATTGACTGACTGCATGACTGCATG";
+		const char *seq2="AGCTCGATCGAGTCTCGAGTAG";
+		int **pt=buildMappingTables(seq1,2);
+	
+		printf("%d - %d\n",(int)pt[0], (int)pt[1]);
+	
+		doComparison(pt, seq1, seq2, 2,10,2,6)->Dump();
+	
+		freeMappingTables(pt);
+	}
 
-	printf("%d - %d\n",(int)pt[0], (int)pt[1]);
+	const char *s1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG";
+	const char *s2="ATCGACGTATAGATTTTTCCACAGCGCCAAACTCTTCTATCACTCATGACTGACTGTGTCATGACTGATTATATATATCTCTCTTCTCATATATCATACT";
 
-	doComparison(pt, seq1, seq2, 2,10,2,6)->Dump();
+	printf("\nTEST1 should be 5\n");
+	printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,12,s2,95,2,0,4) );
 
-	freeMappingTables(pt);
+	printf("\nTEST2 should be 4\n");
+	printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,24,s2,95,2,0,4) );
+
+	char **results=convertSequence("GATACATTAAGCGC");
+
+	printf(results[0]);
+	printf("\n");
+	printf(results[1]);
+	printf("\n");
+	printf(results[2]);
+	printf("\n");
+	
+printf("getTupleID('GGA')=%d\n",getTupleID("GGA",3));
 
 	// k, thresh,wind
 // 	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,0,1,6) );
