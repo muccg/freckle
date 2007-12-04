@@ -49,18 +49,18 @@ int ipow(int x, int n)
 ** It will return the ktuple index of that sequence. It does this without building
 ** a lookup table to save memory.
 */
-TupleID getTupleID(const char *tuple, int len)
+TupleID getTupleID(const char *tuple, int len, const char *bases)
 {
 	TupleID id=0;
 	int index=0;
 
 	for(int i=0; i<len; i++, tuple++)
 	{
-		index=strchr(Bases, (int)*tuple)-Bases;			// get the index in Bases of where this character appears
-		assert(index>=0 && index<(int)strlen(Bases));		// it should be within range
-		assert((index & BASE_MASK) == index);			// it shouldn't have any extra bits
+		index=strchr(bases, (int)*tuple)-bases;			// get the index in Bases of where this character appears
+		assert(index>=0 && index<(int)strlen(bases));		// it should be within range
+		assert((index & BASE_MASK(bases)) == index);			// it shouldn't have any extra bits
 		
-		id=id<<BASE_BIT_SHIFT;		// right shift the id to make space for this new sequence char
+		id=id<<BASE_BIT_SHIFT(bases);		// right shift the id to make space for this new sequence char
 	
 		id |= index;			// add the index bits onto the right
 	}
@@ -83,12 +83,12 @@ TupleID getTupleID(const char *tuple, int len)
 ** Output:
 **   pointertable[2]	An array of two pointer. table[0] points to the beginning of C, and table[1] to D
 */
-int **buildMappingTables( const char *sequence, int ktuplesize )
+int **buildMappingTables( const char *sequence, int ktuplesize, const char *bases )
 {
 	int seqlen=strlen(sequence);
 	assert(seqlen>0);
 
-	int ktuplearraysize=ipow(BASEPAIRS,ktuplesize);
+	int ktuplearraysize=ipow(BASE_PAIRS(bases),ktuplesize);
 	int darraysize=seqlen-ktuplesize+1;
 	
 	// we allocate our arrays
@@ -202,7 +202,6 @@ DotStore *doComparison(int **tables, const char *tablesequence, const char *news
 	int newseqlen=strlen(newsequence);
 	assert(newseqlen>0);
 
-	int ktuplearraysize=ipow(BASEPAIRS,ktuplesize);
 	int darraysize=newseqlen-ktuplesize+1;
 
 	// go through each k-tuple on the newsequence
@@ -273,10 +272,30 @@ char **convertSequence(const char *sequence)
 	return results;
 }
 
+/*
+** makeDotComparisonByTranslation
+** ==============================
+** do a complete comparison including translating, building table and comparing. returns the dotstore.
+** this uses method 2 of the Huang Zhang paper
+*/
+DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch)
+{
+	char **seq1translated=convertSequence(seq1);
+	char **seq2translated=convertSequence(seq2);
 
+	int ***mappingtables=new int **[3];
+	for(int i=0; i<3; i++)
+		mappingtables[i]=buildMappingTables(seq1translated[0],ktuplesize,Aminos);
+	
+	DotStore ***resultmatrix=new DotStore *[3][3];
+	for(int x=0; x<3; x++)
+		for(int y=0; y<3; y++)
+		{
 
-
-
+		}
+	
+	//return doComparison(buildMappingTables(seq1translated,ktuplesize,Aminos), seq1, seq2, ktuplesize, window, mismatch, minmatch);
+}
 
 
 
