@@ -30,8 +30,16 @@ int **buildMappingTables( const char *sequence, int ktuplesize );
 void freeMappingTables(int **tables);
 int sum(int *buffer, int length);
 int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int threshold, int window);
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch);
-DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch);
+DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch);
+DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch);
+
+// helper functions
+int GetDotX(DotStore *store, int index);
+int GetDotY(DotStore *store, int index);
+int GetDotLength(DotStore *store, int index);
+Dot *GetDot(DotStore *store, int index);
+int GetNumDots(DotStore *store);
+void FreeDotStore(DotStore *store);
 
 // test debug
 void getInfo();

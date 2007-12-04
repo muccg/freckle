@@ -186,8 +186,9 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 ** doComparison
 ** ============
 ** compare one sequence against the table constructed sequence
+**
 */
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch)
+DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch)
 {
 	assert(mismatch<window);
 	assert(window>=ktuplesize);
@@ -214,9 +215,13 @@ DotStore *doComparison(int **tables, const char *tablesequence, const char *news
 		//now we look it up in the table C to find the last occurance, and move backwards 
 		//through the linked list expressed in table D
 		for(int position=C[tupleid-1]; position; position=D[position-1])
+		{
 			// so position is a tuple position match in the tabled sequence
 			// now we search forward to see how long the match is (with threshold)
-			dotstore->AddDot(position-1,i,matchAboveThreshold(tablesequence,position-1,newsequence,i,ktuplesize,mismatch,window));
+			int matchlen=matchAboveThreshold(tablesequence,position-1,newsequence,i,ktuplesize,mismatch,window);
+			if(matchlen>=minmatch)
+				dotstore->AddDot(position-1,i,matchlen);
+		}
 	}
 	
 	return dotstore;
@@ -227,10 +232,22 @@ DotStore *doComparison(int **tables, const char *tablesequence, const char *news
 ** =================
 ** do a complete comparison including building table and comparing. returns the dotstore.
 */
-DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch)
+DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch)
 {
-	return doComparison(buildMappingTables(seq1,ktuplesize), seq1, seq2, ktuplesize, window, mismatch);
+	return doComparison(buildMappingTables(seq1,ktuplesize), seq1, seq2, ktuplesize, window, mismatch, minmatch);
 }
+
+
+/*
+** helper functions for the higher level language to read the dotstore
+*/
+int GetDotX(DotStore *store, int index) { return store->GetDot(index)->x; }
+int GetDotY(DotStore *store, int index) { return store->GetDot(index)->y; }
+int GetDotLength(DotStore *store, int index) { return store->GetDot(index)->length; }
+Dot *GetDot(DotStore *store, int index) { return store->GetDot(index); }
+int GetNumDots(DotStore *store) { return store->GetNum(); }
+void FreeDotStore(DotStore *store)  { delete store; }
+
 
 /*
 ** getInfo
@@ -259,13 +276,13 @@ void getInfo()
 
 	printf("%d - %d\n",(int)pt[0], (int)pt[1]);
 
-	doComparison(pt, seq1, seq2, 2,0,10);
+	doComparison(pt, seq1, seq2, 2,10,2,6)->Dump();
 
 	freeMappingTables(pt);
 
 	// k, thresh,wind
-	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,1,0,6) );
-	printf("%s\n%s\n",seq1+83,seq2+1);
+// 	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,0,1,6) );
+// 	printf("%s\n%s\n",seq1+83,seq2+1);
 }
 
 
