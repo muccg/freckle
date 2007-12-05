@@ -11,6 +11,9 @@ DotStore::DotStore()
 
 	numchunks=0;
 	numdots=0;
+
+	// indexes
+	yhead=ytail=NULL;
 }
 
 //destruct
@@ -126,5 +129,30 @@ void DotStore::Dump()
 		printf("%d\t%d\t%d\t%d\n",i,GetDot(i)->x,GetDot(i)->y,GetDot(i)->length);
 }
 
+// indexes the dots by y and then by x
+void DotStore::CreateIndex()
+{
+	// go through every dot
+	for(int i=0; i<numdots; i++)
+	{
+		IndexDot(GetDot(i));
+	}
+}
 
+void DotStore::IndexDot( Dot *dot )
+{
+	assert(dot);
 
+	IndexNode *node=new IndexNode;
+	memset(node,0,sizeof(IndexNode);
+
+	if(!ytail || !yhead)
+	{
+		//first item
+		yhead=ytail=node;
+	}
+	else
+	{
+		//add it in
+		tail->next=
+	}

@@ -3,6 +3,19 @@
 
 #include "DotStorageChunk.h"
 
+/* for indexing */
+struct structIndexNode
+{
+	struct structIndexNode *next;					// next node in this node array
+	int index;							// our value
+	union
+	{
+		struct structIndexNode *child;				// for nodes
+		int length;						// for leaves
+	} value;
+};
+typedef struct structIndexNode IndexNode;
+
 class DotStore
 {
 private:
@@ -55,6 +68,24 @@ public:
 
 	// Dump out the contents. For debug mainly.
 	void Dump();
+
+/*
+**
+** Sorted Indexing Functions
+** =========================
+** the following functions are to create a sorted rapid access index of all the dots once they have been calculated.
+** 
+** It works like this
+** for each y value stored sorted in an array there is a pointer
+** following this pointer gives us an array of x values sorted in order
+** with each value is the length of the match
+*/
+private:
+	IndexNode *yhead,*ytail;
+
+public:
+	void CreateIndex();
+	
 };
 
 #endif

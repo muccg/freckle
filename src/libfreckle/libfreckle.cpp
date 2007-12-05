@@ -313,7 +313,7 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 			printf("doComparison %d %d...\n",xframe,yframe);
 			printf("s1:%s\n",seq1translated[xframe]);
 			printf("s2:%s\n",seq2translated[yframe]);
-			ds=doComparison( mappingtables[xframe], seq1translated[xframe], seq2translated[yframe], ktuplesize, window, mismatch, minmatch,Aminos);
+			ds=doComparison( mappingtables[xframe], seq1translated[xframe], seq2translated[yframe], ktuplesize, window, mismatch/3, 1,Aminos);
 			printf("done. %d matches\n",ds->GetNum());
 			for(int num=0; num<ds->GetNum(); num++)
 			{
@@ -418,7 +418,8 @@ void getInfo()
 	}
 	
 	const char *s1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG";
-	const char *s2="ATCGACGTATAGATTTTTCCACAGCGCCAAACTCTTCTATCACTCATGACTGACTGTGTCATGACTGATTATATATATCTCTCTTCTCATATATCATACT";
+	const char *s2="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG";
+	//const char *s2="ATCGACGTATAGATTTTTCCACAGCGCCAAACTCTTCTATCACTCATGACTGACTGTGTCATGACTGATTATATATATCTCTCTTCTCATATATCATACT";
 	
 	DotStore *ds=makeDotComparisonByTranslation(s1, s2, /*int ktuplesize*/2, /*int window*/3, /*int mismatch*/0, /*int minmatch*/1);
 	
@@ -428,7 +429,7 @@ void getInfo()
 
 	printf("OLD\n");
 
-	makeDotComparison(s1,s2,2,3,0,1)->Dump();
+	printf("%d matches\n",makeDotComparison(s1,s2,2,3,0,1)->GetNum());
 	
 }
 

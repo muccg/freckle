@@ -22,6 +22,9 @@ DotStorageChunk.o: DotStorageChunk.cpp DotStorageChunk.h
 DotStore.o: DotStore.cpp DotStore.h
 	$(CPP) $(CPPFLAGS) -c DotStore.cpp
 
+LinkedList.o: LinkedList.cpp LinkedList.h
+	$(CPP) $(CPPFLAGS) -c LinkedList.cpp
+
 
 #
 # CPP Test Suites
