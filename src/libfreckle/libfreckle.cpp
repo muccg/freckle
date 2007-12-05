@@ -103,7 +103,7 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 	const char *tuple=sequence;
 	for(int i=0; i<darraysize; i++, tuple++)
 		//read the ith tuple from the sequence. Put its tuple id into D
-		D[i]=getTupleID(tuple,ktuplesize);
+		D[i]=getTupleID(tuple,ktuplesize,bases);
 
 	// Build the tables
 	tuple=sequence;
@@ -165,7 +165,7 @@ int sum(int *buffer, int length)
 int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int mismatch, int window)
 {
 	assert(window>0);
-	assert(k>0);
+	//assert(k>0);				//k=0 for methods 2 and 3 where we are using a coded ktuple to initiate these search locations
 	int ringbuf[window];
 	
 	memset(ringbuf,0,sizeof(ringbuf));
@@ -189,7 +189,7 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 ** compare one sequence against the table constructed sequence
 **
 */
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch)
+DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases )
 {
 	assert(mismatch<window);
 	assert(window>=ktuplesize);
@@ -210,7 +210,7 @@ DotStore *doComparison(int **tables, const char *tablesequence, const char *news
 	for(int i=0; i<darraysize; i++, tuple++)
 	{
 		// first we get the id of this tuple
-		tupleid=getTupleID(tuple,ktuplesize);
+		tupleid=getTupleID(tuple,ktuplesize,bases);
 		
 		//now we look it up in the table C to find the last occurance, and move backwards 
 		//through the linked list expressed in table D
@@ -245,6 +245,7 @@ DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, 
 */
 char **convertSequence(const char *sequence)
 {
+	printf("convertSequence()\n");
 	int seqlen=strlen(sequence);
 
 	//translation table
@@ -260,13 +261,22 @@ char **convertSequence(const char *sequence)
 		memset(results[i],0,sizeof(char)*(seqlen/3+1));
 	}
 
+	printf("seqlen=%d, %d\n",seqlen,seqlen/3);
 	for(int i=0; i<seqlen/3; i++)
 		for (int offset=0; offset<3; offset++)
 		{
-			TupleID id=getTupleID(sequence+i*3+offset, 3)-1;
-			assert(id>=0);
-			assert(id<codetablelen);
-			results[offset][i]=TranslateUniversal[id];
+			if(i*3+offset+3<=seqlen)
+			{
+				printf("i:%d offset:%d seq[n]=%s\n",i,offset, sequence+i*3);
+				TupleID id=getTupleID(sequence+i*3+offset, 3)-1;
+				assert(id>=0);
+				assert(id<codetablelen);
+				results[offset][i]=TranslateUniversal[id];
+			}
+			else
+			{	
+				printf("overhang\n");
+			}
 		}
 
 	return results;
@@ -283,18 +293,49 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 	char **seq1translated=convertSequence(seq1);
 	char **seq2translated=convertSequence(seq2);
 
+	//build three mapping tables for the 3 reading frames of sequence 1
 	int ***mappingtables=new int **[3];
 	for(int i=0; i<3; i++)
+	{
+		printf("=%d=\n",i);
 		mappingtables[i]=buildMappingTables(seq1translated[0],ktuplesize,Aminos);
-	
-	DotStore ***resultmatrix=new DotStore *[3][3];
-	for(int x=0; x<3; x++)
-		for(int y=0; y<3; y++)
-		{
+	}
 
+	printf("mapping tables done\n");
+	
+	//now for each amino acid match (in the 3x3 reading frames) we scan the original sequence
+	//for the matchlength.
+	DotStore *ds=NULL;
+	DotStore *dotstore=new DotStore();
+	for(int xframe=0; xframe<3; xframe++)
+		for(int yframe=0; yframe<3; yframe++)
+		{
+			printf("doComparison %d %d...\n",xframe,yframe);
+			printf("s1:%s\n",seq1translated[xframe]);
+			printf("s2:%s\n",seq2translated[yframe]);
+			ds=doComparison( mappingtables[xframe], seq1translated[xframe], seq2translated[yframe], ktuplesize, window, mismatch, minmatch,Aminos);
+			printf("done. %d matches\n",ds->GetNum());
+			for(int num=0; num<ds->GetNum(); num++)
+			{
+				Dot *dot=ds->GetDot(num);
+				int dx=dot->x;
+				int dy=dot->y;
+				int length=dot->length;
+
+				// the positions in the original sequences
+				int originalx=dx*3+xframe;
+				int originaly=dy*3+yframe;
+
+				// get the original match length
+				int matchlen=matchAboveThreshold(seq1, originalx, seq2, originaly, 0, mismatch, window);
+				if(matchlen>=minmatch)
+					dotstore->AddDot(originalx,originaly,matchlen);
+				
+			}
+			delete ds;
 		}
 	
-	//return doComparison(buildMappingTables(seq1translated,ktuplesize,Aminos), seq1, seq2, ktuplesize, window, mismatch, minmatch);
+	return dotstore;
 }
 
 
@@ -349,29 +390,46 @@ void getInfo()
 		freeMappingTables(pt);
 	}
 
+	if(0)
+	{
+		const char *s1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG";
+		const char *s2="ATCGACGTATAGATTTTTCCACAGCGCCAAACTCTTCTATCACTCATGACTGACTGTGTCATGACTGATTATATATATCTCTCTTCTCATATATCATACT";
+	
+		printf("\nTEST1 should be 5\n");
+		printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,12,s2,95,2,0,4) );
+	
+		printf("\nTEST2 should be 4\n");
+		printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,24,s2,95,2,0,4) );
+	
+		char **results=convertSequence("GATACATTAAGCGC");
+	
+		printf(results[0]);
+		printf("\n");
+		printf(results[1]);
+		printf("\n");
+		printf(results[2]);
+		printf("\n");
+		
+		printf("getTupleID('GGA')=%d\n",getTupleID("GGA",3));
+	
+		// k, thresh,wind
+	// 	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,0,1,6) );
+	// 	printf("%s\n%s\n",seq1+83,seq2+1);
+	}
+	
 	const char *s1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG";
 	const char *s2="ATCGACGTATAGATTTTTCCACAGCGCCAAACTCTTCTATCACTCATGACTGACTGTGTCATGACTGATTATATATATCTCTCTTCTCATATATCATACT";
-
-	printf("\nTEST1 should be 5\n");
-	printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,12,s2,95,2,0,4) );
-
-	printf("\nTEST2 should be 4\n");
-	printf("matchAboveThreshold=%d\n",matchAboveThreshold(s1,24,s2,95,2,0,4) );
-
-	char **results=convertSequence("GATACATTAAGCGC");
-
-	printf(results[0]);
-	printf("\n");
-	printf(results[1]);
-	printf("\n");
-	printf(results[2]);
-	printf("\n");
 	
-printf("getTupleID('GGA')=%d\n",getTupleID("GGA",3));
+	DotStore *ds=makeDotComparisonByTranslation(s1, s2, /*int ktuplesize*/2, /*int window*/3, /*int mismatch*/0, /*int minmatch*/1);
+	
+	printf("%d matches\n",ds->GetNum());
 
-	// k, thresh,wind
-// 	printf("matchAboveThreshold=%d\n",matchAboveThreshold(seq1+83,0,seq2+1,0,0,1,6) );
-// 	printf("%s\n%s\n",seq1+83,seq2+1);
+	ds->Dump();
+
+	printf("OLD\n");
+
+	makeDotComparison(s1,s2,2,3,0,1)->Dump();
+	
 }
 
 

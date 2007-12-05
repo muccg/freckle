@@ -38,7 +38,7 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 void freeMappingTables(int **tables);
 int sum(int *buffer, int length);
 int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int threshold, int window);
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch);
+DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases=Bases );
 DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch);
 
 // helper functions
