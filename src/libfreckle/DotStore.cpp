@@ -12,8 +12,7 @@ DotStore::DotStore()
 	numchunks=0;
 	numdots=0;
 
-	// indexes
-	yhead=ytail=NULL;
+	index=NULL;
 }
 
 //destruct
@@ -132,6 +131,13 @@ void DotStore::Dump()
 // indexes the dots by y and then by x
 void DotStore::CreateIndex()
 {
+	// if there is an old index destroy it
+	if(index)
+		DestroyIndex();
+
+	// create a new index
+	index=new LinkedList<struct structIndexNode>;
+
 	// go through every dot
 	for(int i=0; i<numdots; i++)
 	{
@@ -143,16 +149,22 @@ void DotStore::IndexDot( Dot *dot )
 {
 	assert(dot);
 
-	IndexNode *node=new IndexNode;
-	memset(node,0,sizeof(IndexNode);
+	// index this dot into the linkedlist index
+	int x=dot->x;
+	int y=dot->y;
+	int len=dot->length;
 
-	if(!ytail || !yhead)
+	// find this y in our linked list
+	for(LinkedList<struct structIndexNode>::iterator i(index); !i.ended(); i.next())
 	{
-		//first item
-		yhead=ytail=node;
+		if(*i->index==y)
+		{
+			//found. lets add the x point in
+			index.Add
+		}
 	}
-	else
-	{
-		//add it in
-		tail->next=
-	}
+
+}
+
+
+
