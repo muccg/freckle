@@ -2,21 +2,27 @@
 #define _DOTSTORE_H_
 
 #include "DotStorageChunk.h"
-#include "LinkedList.h"
+#include "LinkedListVal.h"
 
 /* for indexing */
-struct structIndexNode
+struct structIndexXNode
 {
-	int index;							// our value
-	union
-	{
-		LinkedList<struct structIndexNode> *child;		// for nodes
-		int length;						// for leaves
-	} value;
+	int x;							//our x position 
+	Dot *dot;						//our dot
 };
-typedef struct structIndexNode IndexNode;
+typedef struct structIndexXNode IndexXNode;
+
+struct structIndexYNode
+{
+	int y;							// our y position
+	LinkedListVal<struct structIndexXNode *> *child;		// for x nodes
+};
+typedef struct structIndexYNode IndexYNode;
 
 
+
+
+// Our dot storage class
 class DotStore
 {
 private:
@@ -82,11 +88,16 @@ public:
 ** with each value is the length of the match
 */
 private:
-	LinkedList<struct structIndexNode> *index;
+	LinkedListVal<IndexYNode *> *index;
 
 public:
 	void CreateIndex();
 	void IndexDot( Dot *dot );
+	void DestroyIndex();
+	void DumpIndex();
+
+	// index access functions
+	Dot *GetIndexDot(int x, int y);
 };
 
 #endif
