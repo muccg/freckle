@@ -39,26 +39,26 @@ public:
 	}
 
 	// test adding tens of thousands and then deleting them
-	void testDelMany(void)
-	{
-		DotStore *ds=new DotStore();
-
-		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
-		{
-			ds->AddDot(i,i,i);
-			TS_ASSERT(ds->GetNum()==i+1);
-		}
-
-		// test the top point is correct then delete it
-		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
-		{
-			TS_ASSERT(ds->GetDot(0)->x==i);
-			ds->DelDot(0);
-		}
-
-		// free the dotstore
-		delete ds;
-	}
+// 	void testDelMany(void)
+// 	{
+// 		DotStore *ds=new DotStore();
+// 
+// 		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
+// 		{
+// 			ds->AddDot(i,i,i);
+// 			TS_ASSERT(ds->GetNum()==i+1);
+// 		}
+// 
+// 		// test the top point is correct then delete it
+// 		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
+// 		{
+// 			TS_ASSERT(ds->GetDot(0)->x==i);
+// 			ds->DelDot(0);
+// 		}
+// 
+// 		// free the dotstore
+// 		delete ds;
+// 	}
 
 	// test indexing
 	void testIndexing(void)
@@ -82,6 +82,42 @@ public:
 		// test destroying the indexing
 		ds->DestroyIndex();
 		
+	}
+
+	// test CountAreaMatches
+	void testCountAreaMatches(void)
+	{
+		DotStore *ds=new DotStore();
+
+		// one big line down the center
+		for(int i=0; i<300; i++)
+			ds->AddDot(i,i,300-i);
+
+		// index
+		ds->CreateIndex();
+// 		ds->DumpIndex();
+
+		// lets count up sections
+		// check for diagonal mid section
+		TS_ASSERT(ds->CountAreaMatches(100,100,200,200,10)==100);
+
+		// test a top left corner with window
+		TS_ASSERT(ds->CountAreaMatches(0,0,10,10,10)==10);
+
+		// test an offset block which just touches the diagonal is truly empty
+		TS_ASSERT(ds->CountAreaMatches(10,0,20,10,10)==0);
+
+		// test an offset block which intersects the bottom left is correct
+		TS_ASSERT(ds->CountAreaMatches(10,1,20,11,10)==1);
+		TS_ASSERT(ds->CountAreaMatches(10,5,20,15,10)==5);
+
+		// test an offset block which just intersects thr top right is correct
+		TS_ASSERT(ds->CountAreaMatches(10,20,25,35,10)==5);
+
+		// test the bottom right corner
+		TS_ASSERT(ds->CountAreaMatches(250,250,300,300,10)==50);
+
+		ds->DestroyIndex();
 	}
 };
 

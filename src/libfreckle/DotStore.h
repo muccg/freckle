@@ -98,6 +98,13 @@ public:
 
 	// index access functions
 	Dot *GetIndexDot(int x, int y);
+
+	//
+	// \brief sum the amount of dots within the passed in window 
+	// 
+	// uses an efficient algorithm and the index must have been created
+	//
+	int CountAreaMatches(int x1, int x2, int y1, int y2, int window);
 };
 
 #endif

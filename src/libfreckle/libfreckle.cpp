@@ -428,8 +428,8 @@ void getInfo()
 	ds->Dump();
 
 	printf("OLD\n");
-
-	printf("%d matches\n",makeDotComparison(s1,s2,2,3,0,1)->GetNum());
+	makeDotComparison(s1,s2,2,3,0,1)->Dump();
+// 	printf("%d matches\n",makeDotComparison(s1,s2,2,3,0,1)->GetNum());
 	
 }
 
