@@ -357,13 +357,9 @@ void FreeDotStore(DotStore *store)  { delete store; }
 
 unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window)
 {
-	printf("1\n");
 	store->CreateIndex();
-	printf("2\n");
 	int *storage=store->CalculateAverageGrid(xseqsize,yseqsize,longest,window);
-	printf("3\n");
 	unsigned char *result=store->GridToString();
-	printf("4\n");
 	return result;
 }
 

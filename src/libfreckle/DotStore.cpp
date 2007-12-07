@@ -470,6 +470,8 @@ int *DotStore::CalculateAverageGrid(int xsize, int ysize, int longest, int windo
 	int *storage=new int [numx*numy];
 	assert(storage);
 
+	printf("X:%d Y:%d\n",numx,numy);
+
 	for(int y=0; y<numy; y++)
 		for(int x=0; x<numx; x++)
 			storage[y*numx+x]=CountAreaMatches(x*chunksize, y*chunksize, x*chunksize+chunksize, y*chunksize+chunksize , window);

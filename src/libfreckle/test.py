@@ -6,21 +6,42 @@ from ctypes import *
 lib=CDLL("./libfreckle.so")
 #lib.getInfo(None)
 
-seq1="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"
-seq2="GCTAGCTGTATATATCGCTAGATCTCTTATTATATATAGTGTCGCGTCGTTATGACTATATTATATAAAATACTGCAGTACTGACTGGCGCGCATTCTCTTACTGATGATGCTGCAGTCTGATGCTGACTG"
+#seq1="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"
+seq2="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"*10
+seq1="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"*10
+seq1="".join([a for a in seq1])
 
-print "making dot store"
 dotstore=lib.makeDotComparison(seq1, seq2, 4, 10, 1, 5)
-print "done"
 
-lib.DumpDotStore(dotstore)
+#lib.DumpDotStore(dotstore)
+#lib.DotStoreImageToString.restype = c_char_p
 
-print "making string"
-string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),10,4)
-print "done"
+longest=800
+string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),longest,4)
 
-print string
+w = len(seq1)
+h = len(seq2)
 
+if h>w:
+	ht=longest
+	wt=int( (float(w)/float(h))*float(ht)   )
+else:
+	wt=longest
+	ht=int( (float(h)/float(w))*float(wt)   )
+
+result=string_at(string,w*h)
+
+print result
+
+#lets negative it
+data=''
+for pixel in result:
+	data+=chr(255-ord(pixel))
+
+from PIL import Image
+
+image=Image.fromstring("L", (1060,1060), data)
+image.save("testimage.png")
 #num=lib.GetNumDots(dotstore)
 #for i in xrange(num):
 	#print i,lib.GetDotX(dotstore,i),lib.GetDotY(dotstore,i),lib.GetDotLength(dotstore,i)
