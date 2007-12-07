@@ -48,6 +48,8 @@ int GetDotLength(DotStore *store, int index);
 Dot *GetDot(DotStore *store, int index);
 int GetNumDots(DotStore *store);
 void FreeDotStore(DotStore *store);
+unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window);
+void DumpDotStore(DotStore *store);
 
 // test debug
 void getInfo();

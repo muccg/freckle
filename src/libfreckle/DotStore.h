@@ -89,6 +89,9 @@ public:
 */
 private:
 	LinkedListVal<IndexYNode *> *index;
+	int pixwidth;
+	int pixheight;
+	int *averagearray;
 
 public:
 	void CreateIndex();
@@ -105,6 +108,44 @@ public:
 	// uses an efficient algorithm and the index must have been created
 	//
 	int CountAreaMatches(int x1, int x2, int y1, int y2, int window);
+
+	//
+	// \brief create a map of boxed sums of the full dot plot by calling CountAreaMatches for each sub grid
+	//
+	// \param xsize the length of the x axis in nucleotide basepairs
+	// \param ysize the length of the y axis in nucleotide basepairs
+	// \param longest The final length of the longest edge in cells (the width or height of the final image)
+	// \param the k-tuple size used for the dotplot calculation
+	int *CalculateAverageGrid(int xsize, int ysize, int longest, int window);
+
+	//
+	// \brief helper function to calculate maximum array value (for scaling)
+	//
+	// \param 
+	inline int GetMaximumGridValue(int width, int height, int *store)
+	{
+		int max=-999999;
+		for(int pos=0; pos<width*height; pos++)
+			if(store[pos]>max)
+				max=store[pos];
+		return max;
+	} 
+
+	//
+	// \brief helper function to calculate maximum array value (for scaling)
+	//
+	// \param 
+	inline int GetMinimumGridValue(int width, int height, int *store)
+	{
+		int min=99999999;
+		for(int pos=0; pos<width*height; pos++)
+			if(store[pos]<min)
+				min=store[pos];
+		return min;
+	} 
+
+	// turn the averaged grid into a luminance image string for the higher level language
+	unsigned char *GridToString();
 };
 
 #endif

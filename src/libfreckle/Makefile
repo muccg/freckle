@@ -1,7 +1,7 @@
 CPP=g++
 CC=gcc
-CPPFLAGS=-fPIC -Wall
-LDFLAGS=-shared -Wl,-soname,test.so -lc
+CPPFLAGS=-fPIC -Wall -g
+LDFLAGS=-shared -Wl,-soname,test.so -g -lc
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o
 

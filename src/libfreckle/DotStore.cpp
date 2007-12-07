@@ -13,6 +13,10 @@ DotStore::DotStore()
 	numdots=0;
 
 	index=NULL;
+
+	averagearray=NULL;
+	pixwidth=0;
+	pixheight=0;
 }
 
 //destruct
@@ -146,7 +150,7 @@ void DotStore::CreateIndex()
 void DotStore::IndexDot( Dot *dot )
 {
 	assert(dot);
-
+	
 	// index this dot into the linkedlist index
 	int x=dot->x;
 	int y=dot->y;
@@ -164,7 +168,6 @@ void DotStore::IndexDot( Dot *dot )
 	for(; !i.Done() && (*i)->y<y; i++)
 		;
 
-	
 	// if i is done, then we have scanned the whole list and every y is less than us. so insert a new y at the end of the list
 	if(i.Done())
 	{
@@ -188,7 +191,7 @@ void DotStore::IndexDot( Dot *dot )
 		
 		ynode->y=y;
 		ynode->child=new LinkedListVal<IndexXNode*>;;
-		index->AddAfter((LinkedListValElement<IndexYNode*>*)(*i), ynode);		// explicitly cast? WTF? Why?
+		index->AddAfter(index->Find(*i), ynode);
 	}
 
 	assert(ynode);				//this should not be NULL by now. it should point to the ynode we belong under
@@ -215,7 +218,8 @@ void DotStore::IndexDot( Dot *dot )
 		else
 		{
 			//mid list. insert
-			ynode->child->AddAfter( (LinkedListValElement<IndexXNode*>*)(*j), xnode);
+			//ynode->child->AddAfter( (LinkedListValElement<IndexXNode*>*)(*j), xnode);
+			ynode->child->AddAfter( ynode->child->Find(*j), xnode);
 		}
 	}
 }
@@ -335,7 +339,6 @@ int DotStore::CountAreaMatches(int x1, int y1, int x2, int y2, int window)
 					int length=(*j)->dot->length;
 					int protrude=length;			//how much protrudes into this calculation square
 					
-					int initialcount=count;
 // 					printf("%d,%d,%d,%d (%d)\n",x,y,length,protrude);
 
 					// which zone are we in?
@@ -348,7 +351,7 @@ int DotStore::CountAreaMatches(int x1, int y1, int x2, int y2, int window)
 						if(x+protrude > x2)
 							protrude=x2-x;
 						if(y+protrude > y2)
-							protrude=y2-x;
+							protrude=y2-y;
 						
 						//scan down and to the right to see when our next match point comes up or until our length is exhausted. add one for each point
 						int xp=x;
@@ -428,5 +431,68 @@ int DotStore::CountAreaMatches(int x1, int y1, int x2, int y2, int window)
 // 	printf("count=%d\n",count);
 	return count;
 }
+
+int *DotStore::CalculateAverageGrid(int xsize, int ysize, int longest, int window)
+{
+	double width, height, boxwidth, boxheight;
+	double scale;
+
+	// calculate parameters
+	if(xsize>ysize)
+	{
+		//horizontal aspect
+		width=(double)longest;
+		height=(double)longest*(double)ysize/(double)xsize;
+		scale=(double)xsize/width;
+	}
+	else if(xsize<ysize)
+	{
+		//vertical aspect
+		height=(double)longest;
+		width=(double)longest*(double)xsize/(double)ysize;
+		scale=(double)ysize/height;
+	}
+	else
+	{	
+		//square
+		width=height=(double)longest;
+		scale=(double)xsize/width;
+	}
+
+	// the size of the averaging window and the remaining strips along the side and bottom
+	int chunksize=int(scale);
+	int remainderx=xsize % chunksize;
+	int remaindery=ysize % chunksize;
+	
+	int numx=xsize/chunksize;
+	int numy=ysize/chunksize;
+
+	int *storage=new int [numx*numy];
+	assert(storage);
+
+	for(int y=0; y<numy; y++)
+		for(int x=0; x<numx; x++)
+			storage[y*numx+x]=CountAreaMatches(x*chunksize, y*chunksize, x*chunksize+chunksize, y*chunksize+chunksize , window);
+
+	// TODO: as it stands we crop the remainders. First we have to make CountAreaMatches deal with rectangles
+
+	pixwidth=numx;
+	pixheight=numy;
+	averagearray=storage;
+	return storage;
+}
+
+unsigned char *DotStore::GridToString()
+{
+	unsigned char *out=new unsigned char [pixwidth*pixheight];
+	double min=(double)GetMinimumGridValue(pixwidth,pixheight,averagearray);
+	double max=(double)GetMaximumGridValue(pixwidth,pixheight,averagearray);
+	
+	for(int pos=0; pos<pixwidth*pixheight; pos++)
+		out[pos]=(unsigned char)(255.0*(((double)averagearray[pos])-min)/(max-min));
+
+	return out;
+}
+
 
 
