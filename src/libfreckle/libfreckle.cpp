@@ -355,13 +355,33 @@ Dot *GetDot(DotStore *store, int index) { return store->GetDot(index); }
 int GetNumDots(DotStore *store) { return store->GetNum(); }
 void FreeDotStore(DotStore *store)  { delete store; }
 
-unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window)
+
+/*
+** helper function to interface with the dotgrid
+*/
+DotGrid *NewDotGrid() { return new DotGrid(); }
+void DelDotGrid(DotGrid *grid) { delete grid; }
+int DotGridWidth(DotGrid *grid) { return grid->GetWidth(); }
+int DotGridHeight(DotGrid *grid) { return grid->GetHeight(); }
+int DotGridGetSize(DotGrid *grid) { return grid->GetSize(); }
+int DotGridGetMax(DotGrid *grid) { return grid->GetMax(); }
+int DotGridGetMin(DotGrid *grid) { return grid->GetMin(); }
+unsigned char *DotGridToString(DotGrid *grid) { return grid->ToString(); }
+void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, double x2, double y2, double scale, int window)
 {
-	store->CreateIndex();
-	int *storage=store->CalculateAverageGrid(xseqsize,yseqsize,longest,window);
-	unsigned char *result=store->GridToString();
-	return result;
+	grid->CalculateGrid(source, x1, y1, x2, y2, scale, window);
 }
+void DotGridAddInplace(DotGrid *source, DotGrid *add) { source->AddInplace(add); }
+void DotGridFlipInplace(DotGrid *grid) { grid->FlipInplace(); }
+
+
+// unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window)
+// {
+// 	store->CreateIndex();
+// 	int *storage=store->CalculateAverageGrid(xseqsize,yseqsize,longest,window);
+// 	unsigned char *result=store->GridToString();
+// 	return result;
+// }
 
 void DumpDotStore(DotStore *store) { store->Dump(); }
 

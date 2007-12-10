@@ -14,30 +14,6 @@ private:
 
 	int *data;			// where we store the grid data
 
-	// for internal class use (just to make more robust and bounds test)
-	inline void SetPoint(int x, int y, int point)
-	{
-		assert(data);
-		assert(x>=0 && x<width);
-		assert(y>=0 && y<height);
-		data[y*width+x]=point;
-	}
-
-	inline int GetPoint(int x, int y) const
-	{
-		assert(data);
-		assert(x>=0 && x<width);
-		assert(y>=0 && y<height);
-		return data[y*width+x];
-	}
-
-	inline int GetData(int pos) const
-	{
-		assert(data);
-		assert(pos>=0 && pos<width*height);
-		return data[pos];
-	}
-
 public:
 	DotGrid();
 	~DotGrid();
@@ -61,6 +37,29 @@ public:
 		return width*height;
 	}	
 
+	// for internal class use (just to make more robust and bounds test)
+	inline void SetPoint(int x, int y, int point)
+	{
+		assert(data);
+		assert(x>=0 && x<width);
+		assert(y>=0 && y<height);
+		data[y*width+x]=point;
+	}
+
+	inline int GetPoint(int x, int y) const
+	{
+		assert(data);
+		assert(x>=0 && x<width);
+		assert(y>=0 && y<height);
+		return data[y*width+x];
+	}
+
+	inline int GetData(int pos) const
+	{
+		assert(data);
+		assert(pos>=0 && pos<width*height);
+		return data[pos];
+	}
 	//
 	// \brief helper function to calculate maximum array value (for scaling)
 	//

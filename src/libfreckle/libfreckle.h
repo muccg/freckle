@@ -2,6 +2,7 @@
 #define _LIBFRECKLE_H_
 
 #include "DotStore.h"
+#include "DotGrid.h"
 
 extern "C" {
 
@@ -48,8 +49,23 @@ int GetDotLength(DotStore *store, int index);
 Dot *GetDot(DotStore *store, int index);
 int GetNumDots(DotStore *store);
 void FreeDotStore(DotStore *store);
-unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window);
+// unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window);
 void DumpDotStore(DotStore *store);
+
+// DotGrid helper functions and wrappers
+DotGrid *NewDotGrid();
+void DelDotGrid(DotGrid *grid);
+int DotGridWidth(DotGrid *grid);
+int DotGridHeight(DotGrid *grid);
+int DotGridGetSize(DotGrid *grid);
+int DotGridGetMax(DotGrid *grid);
+int DotGridGetMin(DotGrid *grid);
+unsigned char *DotGridToString(DotGrid *grid);
+void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, double x2, double y2, double scale, int window);
+void DotGridAddInplace(DotGrid *source, DotGrid *add);
+void DotGridFlipInplace(DotGrid *grid);
+
+
 
 // test debug
 void getInfo();

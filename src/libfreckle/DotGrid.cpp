@@ -93,16 +93,16 @@ void DotGrid::AddInplace(DotGrid *second)
 void DotGrid::FlipInplace()
 {
 	int *store=new int[width];
-	for int(y=0; y<height/2; y++)
+	for(int y=0; y<height/2; y++)
 	{
 		//copy row into store
-		memcpy(store, *data[y*width], width*sizeof(int));
+		memcpy(store, &data[y*width], width*sizeof(int));
 		
 		//copy end row into head row
-		memcpy(*data[y*width], *data[(height-1-y)*width], width*sizeof(int));
+		memcpy(&data[y*width], &data[(height-1-y)*width], width*sizeof(int));
 
 		// copy store into end row
-		memcpy(*data[(height-1-y)*width], store, width*sizeof(int));
+		memcpy(&data[(height-1-y)*width], store, width*sizeof(int));
 	}
 	delete store;
 }

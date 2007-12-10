@@ -22,6 +22,9 @@ dotstore=lib.makeDotComparison(seq1, seq2, 4, 10, 1, 5)
 longest=len(seq2)
 print "SEQ1:",len(seq1)
 print "SEQ2:",len(seq2)
+
+
+
 string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),longest,2*4)
 
 print "WTF!"
