@@ -320,7 +320,7 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 				Dot *dot=ds->GetDot(num);
 				int dx=dot->x;
 				int dy=dot->y;
-				int length=dot->length;
+				//int length=dot->length;
 
 				// the positions in the original sequences
 				int originalx=dx*3+xframe;
