@@ -375,8 +375,8 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 						//scan down and to the right to see when our next match point comes up or until our length is exhausted. add one for each point
 						if(protrude)
 						{
-							int xp=x;
-							int yp=y;
+							int xp=(int)x;
+							int yp=(int)y;
 							do
 							{ 
 								count++;
@@ -404,8 +404,8 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 							// TODO: Check if we extend out of the bottom (non square window)
 // 							printf("sigma:%f protrude:%f\n",sigma,protrude);
 	
-							int xp=x;
-							int yp=y;
+							int xp=(int)x;
+							int yp=(int)y;
 							do
 							{
 								if(yp>=y1)
@@ -426,14 +426,14 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 							protrude=length-(x1-x);
 							
 							// check if we extend out of the window to the bottom too
-							int sigma=length-(y2-y);
+							double sigma=length-(y2-y);
 							if(sigma>0)
 								protrude-=sigma;
 	
 							// TODO: Check if we extend out of the window to the right, too (non square window)
 	
-							int xp=x;
-							int yp=y;
+							int xp=(int)x;
+							int yp=(int)y;
 							do
 							{
 								if(xp>=x1)
