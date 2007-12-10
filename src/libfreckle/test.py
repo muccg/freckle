@@ -3,12 +3,14 @@
 #
 
 import sys
+from random import choice
 from ctypes import *
 lib=CDLL("./libfreckle.so")
 #lib.getInfo(None)
 
-seq1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG"
-seq2="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG"
+seq1="".join([choice("ACGT") for num in xrange(1000)])
+#seq2="".join([choice("ACGT") for num in xrange(1000)])
+seq2=seq1+"".join([a for a in reversed(seq1)])
 #seq1="".join([a for a in seq1])
 
 dotstore=lib.makeDotComparison(seq1, seq2, 4, 10, 1, 5)
@@ -17,8 +19,12 @@ dotstore=lib.makeDotComparison(seq1, seq2, 4, 10, 1, 5)
 #sys.exit(0)
 #lib.DotStoreImageToString.restype = c_char_p
 
-longest=len(seq1)/2
-string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),longest,4)
+longest=len(seq2)
+print "SEQ1:",len(seq1)
+print "SEQ2:",len(seq2)
+string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),longest,2*4)
+
+print "WTF!"
 
 w = len(seq1)
 h = len(seq2)
@@ -30,7 +36,9 @@ else:
 	wt=longest
 	ht=int( (float(h)/float(w))*float(wt)   )
 
-result=string_at(string,w*h)
+print "aha",wt,ht,wt*ht
+result=string_at(string,wt*ht)
+print "yes!"
 
 print result
 
@@ -41,8 +49,11 @@ for pixel in result:
 
 from PIL import Image
 
-image=Image.fromstring("L", (longest,longest), data)
+print "PIL!"
+image=Image.fromstring("L", (wt,ht), data)
+print "PIL2"
 image.save("testimage.png")
+print "PIL3"
 #num=lib.GetNumDots(dotstore)
 #for i in xrange(num):
 	#print i,lib.GetDotX(dotstore,i),lib.GetDotY(dotstore,i),lib.GetDotLength(dotstore,i)

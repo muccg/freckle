@@ -284,7 +284,6 @@ void DotStore::DumpIndex()
 			printf("\tx:%d => %d\n",(*j)->x,(int)(*j)->dot);
 		}
 	}
-	printf("dumped\n");
 }
 
 
@@ -326,7 +325,7 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 
 	// for each y value that is interesting
 	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	for(; !i.Done() && (double)((*i)->y)<=(y1-dwindow); i++)
+	for(; !i.Done() && (double)((*i)->y)+0.5<=(y1-dwindow); i++)
 		;
 
 // 	printf("skipping y: %f\n",(double)((*i)->y));
@@ -334,7 +333,7 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 	//if not done
 	if(!i.Done())
 		//now loop through each applicable y value
-		for(;!i.Done() && (double)((*i)->y)<y2; i++)
+		for(;!i.Done() && (double)((*i)->y)+0.5<=y2; i++)
 		{
 // 			printf("processing y=%f child=%d len(%d)\n",(double)((*i)->y),(int)(*i)->child,(int)(*i)->child->Length());
 			// applicable y value.
@@ -344,32 +343,32 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 				printf("index %d, %d\n",(*k)->x,(*k)->dot);*/
 			
 			LinkedListVal<IndexXNode *>::Iterator j(*((*i)->child));
-			for(; !j.Done() && (double)((*j)->x)<(x1-dwindow); j++)
+			for(; !j.Done() && (double)((*j)->x)+0.5<=(x1-dwindow); j++)
 				;
 	
 			if(!j.Done())
-				for(;!j.Done() && (double)((*j)->x)<x2; j++)
+				for(;!j.Done() && (double)((*j)->x)+0.5<=x2; j++)
 				{
 					// applicable x and y
-					int x=(*j)->x;
-					int y=(*i)->y;
-					int length=(*j)->dot->length;
-					int protrude=length;			//how much protrudes into this calculation square
+					double x=(double)(*j)->x+0.5;
+					double y=(double)(*i)->y+0.5;
+					double length=(double)(*j)->dot->length;
+					double protrude=length;			//how much protrudes into this calculation square
 					
-					int initialcount=count;
-					printf("(%d,%d),%d,%d\n",x,y,length,initialcount);
+// 					int initialcount=count;
+// 					printf("testing (%f,%f),%f,%d\n",x,y,length,initialcount);
 
 					// which zone are we in?
 					// 1. inside the window
-					if( x>=x1 && x<=x2 && y>=y1 && y<=y2)
+					if( x>=x1 && x<x2 && y>=y1 && y<y2)
 					{
-						printf("A\n");
+// 						printf("A\n");
 						//we are inside the window
 						// truncate protrude if we extend outside to the bottom or the right of the window
 						if(x+protrude > x2)
-							protrude=(int)x2-x;
+							protrude=x2-x;
 						if(y+protrude > y2)
-							protrude=(int)y2-y;
+							protrude=y2-y;
 						
 
 // 						printf("protrude=%d\n",protrude);
@@ -381,29 +380,29 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 							do
 							{ 
 								count++;
-								protrude--;
-							} while( (!GetIndexDot(++xp,++yp)) && protrude);
+								protrude-=1.0;
+							} while( (!GetIndexDot(++xp,++yp)) && protrude>=1.0);
 						}
 					}
-					// 2. The parallelogram above the area
-					else if( x>(y-y1+x1) && x<(y-y1+x2) )
+					// 2. The parallelogram above the areaand including right on the line
+					else if( x>=(y-y1+x1) && x<(y-y1+x2) )
 					{
-						printf("B\n");
+// 						printf("B\n");
 						//we are above the window
 						if(length>y1-y)
 						{
 							//we extend into the window
-							protrude=length-y+(int)y1;
+							protrude=length-(y1-y);
 							
-							printf("length:%d - y:%d + y1:%f = protrude:%d\n",length,y,y1,protrude);
+// 							printf("length:%f - y:%f + y1:%f = protrude:%f\n",length,y,y1,protrude);
 	
 							// check if we extend out of the window to the right too
-							int sigma=length-(int)x2+x;
+							double sigma=length-(x2-x);
 							if(sigma>0)
 								protrude-=sigma;
 
 							// TODO: Check if we extend out of the bottom (non square window)
-							printf("sigma:%d protrude:%d\n",sigma,protrude);
+// 							printf("sigma:%f protrude:%f\n",sigma,protrude);
 	
 							int xp=x;
 							int yp=y;
@@ -412,22 +411,22 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 								if(yp>=y1)
 								{
 									count++;
-									protrude--;
+									protrude-=1.0;
 								}
-							} while((!GetIndexDot(++xp,++yp)) && protrude);
+							} while((!GetIndexDot(++xp,++yp)) && protrude >=1.0);
 						}
 					}
 					// 3. The parallelogram to the left of the area
 					else if( y>(x-x1+y1) && y<(x-x1+y2) )
 					{
-						printf("C\n");
+// 						printf("C\n");
 						//we are to the left of the window
 						if(length>x1-x)
 						{
-							protrude=length-x+(int)x1;
+							protrude=length-(x1-x);
 							
 							// check if we extend out of the window to the bottom too
-							int sigma=length-(int)y2+y;
+							int sigma=length-(y2-y);
 							if(sigma>0)
 								protrude-=sigma;
 	
@@ -440,24 +439,24 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 								if(xp>=x1)
 								{
 									count++;
-									protrude--;
+									protrude-=1.0;
 								}
-							} while((!GetIndexDot(++xp,++yp)) && protrude);
+							} while((!GetIndexDot(++xp,++yp)) && protrude >= 1.0);
 						}
 					}
 					// else we are not included.
 
-					printf("count=%d\n",count-initialcount);
+// 					printf("count=%d\n",count-initialcount);
 				}
 		}
 
-	printf("count(%f,%f)-(%f,%f)=%d\n",x1,y1,x2,y2,count);
+// 	printf("count(%f,%f)-(%f,%f)=%d\n",x1,y1,x2,y2,count);
 	return count;
 }
 
 int *DotStore::CalculateAverageGrid(int xsize, int ysize, int longest, int window)
 {
-	printf("CalculateAverageGrid(%d,%d,%d,%d)\n",xsize,ysize,longest,window);
+// 	printf("CalculateAverageGrid(%d,%d,%d,%d)\n",xsize,ysize,longest,window);
 	double width, height, boxwidth, boxheight;
 	double scale;
 
@@ -490,16 +489,18 @@ int *DotStore::CalculateAverageGrid(int xsize, int ysize, int longest, int windo
 	int *storage=new int [numx*numy];
 	assert(storage);
 
-	printf("X:%d Y:%d scale:%f\n",numx,numy,scale);
+// 	printf("X:%d Y:%d scale:%f\n",numx,numy,scale);
 
 	for(int y=0; y<numy; y++)
 		for(int x=0; x<numx; x++)
 		{
-// 			printf("averaging from (%f,%f) to (%f,%f)\n",x*scale, y*scale, (x+1)*scale, (y+1)*scale);
+//  			printf("averaging from (%f,%f) to (%f,%f)\n",x*scale, y*scale, (x+1)*scale, (y+1)*scale);
 			storage[y*numx+x]=CountAreaMatches(x*scale, y*scale, (x+1)*scale, (y+1)*scale, window);
+// 			printf("done %d/%d\n",y*numx+x,numx*numy-1);
 		}
 
 	// TODO: as it stands we crop the remainders. First we have to make CountAreaMatches deal with rectangles
+// 	printf("returning\n");
 
 	pixwidth=numx;
 	pixheight=numy;
@@ -509,12 +510,22 @@ int *DotStore::CalculateAverageGrid(int xsize, int ysize, int longest, int windo
 
 unsigned char *DotStore::GridToString()
 {
+// 	printf("DotStore::GridToString()\n");
 	unsigned char *out=new unsigned char [pixwidth*pixheight];
+// 	printf("blah\n");
 	double min=(double)GetMinimumGridValue(pixwidth,pixheight,averagearray);
+// 	printf("yo\n");
 	double max=(double)GetMaximumGridValue(pixwidth,pixheight,averagearray);
-	
+// 	printf("mad\n");	
+
 	for(int pos=0; pos<pixwidth*pixheight; pos++)
+	{
+// 		printf("out[%d]=f(averagearray[%d]\n",pos,pos);
 		out[pos]=(unsigned char)(255.0*(((double)averagearray[pos])-min)/(max-min));
+// 		printf("ding\n");
+	}
+
+// 	printf("done!!!1\n");
 
 	return out;
 }

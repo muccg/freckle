@@ -39,29 +39,29 @@ public:
 	}
 
 	// test adding tens of thousands and then deleting them
-// 	void testDelMany(void)
-// 	{
-// 		DotStore *ds=new DotStore();
-// 
-// 		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
-// 		{
-// 			ds->AddDot(i,i,i);
-// 			TS_ASSERT(ds->GetNum()==i+1);
-// 		}
-// 
-// 		// test the top point is correct then delete it
-// 		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS; i++)
-// 		{
-// 			TS_ASSERT(ds->GetDot(0)->x==i);
-// 			ds->DelDot(0);
-// 		}
-// 
-// 		// free the dotstore
-// 		delete ds;
-// 	}
+	void testDelMany(void)
+	{
+		DotStore *ds=new DotStore();
+
+		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS/4; i++)
+		{
+			ds->AddDot(i,i,i);
+			TS_ASSERT(ds->GetNum()==i+1);
+		}
+
+		// test the top point is correct then delete it
+		for(int i=0; i<TEST_DOTSTORE_NUMPOINTS/4; i++)
+		{
+			TS_ASSERT(ds->GetDot(0)->x==i);
+			ds->DelDot(0);
+		}
+
+		// free the dotstore
+		delete ds;
+	}
 
 	// test indexing
-	void notestIndexing(void)
+	void testIndexing(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -85,7 +85,7 @@ public:
 	}
 
 	// test CountAreaMatches
-	void notestCountAreaMatches(void)
+	void testCountAreaMatches(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -123,7 +123,7 @@ public:
 	}
 
 	// test CalculateAverageGrid
-	void notestCalculateAverageGrid(void)
+	void testCalculateAverageGrid(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -151,7 +151,7 @@ public:
 	}
 
 	// testGridToString
-	void notestGridToString(void)
+	void testGridToString(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -177,7 +177,7 @@ public:
 	}
 
 	// this data was causing a segfault. So we recreate it here. to make sure theses no segfault
-	void notestRealProblemData(void)
+	void testRealProblemData(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -220,7 +220,6 @@ public:
 			for(double y=0.0; y<114.0; y+=1.0)
 			{
 				int count=ds->CountAreaMatches(x,y,x+1.0,y+1.0,5);
-				printf("%f,%f => %d\n",x,y,count);
 				TS_ASSERT( count==0 || count==1);
 			}
 
