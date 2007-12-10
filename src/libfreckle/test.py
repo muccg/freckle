@@ -2,21 +2,22 @@
 # tests the ctypes python importation of libfreckle
 #
 
+import sys
 from ctypes import *
 lib=CDLL("./libfreckle.so")
 #lib.getInfo(None)
 
-#seq1="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"
-seq2="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"*10
-seq1="GATAATGACTGACTGACTGACTGACTGACGACATGGCGCGAGTCGTGATGATATTACTATATATTATATGTGACTGACTGCTGATGCGTATGCGTATGCAGTCTGA"*10
-seq1="".join([a for a in seq1])
+seq1="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG"
+seq2="GCGGGTACTGATATACTCATGATTATACCGCGCGGTTGTGTGAATTAATATCAACACCACAAAAGAGAGGAGGACTTCCTCTCTCTCTCTAACACCAATATATCCGGCCGGTTG"
+#seq1="".join([a for a in seq1])
 
 dotstore=lib.makeDotComparison(seq1, seq2, 4, 10, 1, 5)
 
 #lib.DumpDotStore(dotstore)
+#sys.exit(0)
 #lib.DotStoreImageToString.restype = c_char_p
 
-longest=800
+longest=len(seq1)/2
 string = lib.DotStoreImageToString(dotstore,len(seq1),len(seq2),longest,4)
 
 w = len(seq1)
@@ -40,7 +41,7 @@ for pixel in result:
 
 from PIL import Image
 
-image=Image.fromstring("L", (1060,1060), data)
+image=Image.fromstring("L", (longest,longest), data)
 image.save("testimage.png")
 #num=lib.GetNumDots(dotstore)
 #for i in xrange(num):

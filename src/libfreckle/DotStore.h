@@ -107,7 +107,7 @@ public:
 	// 
 	// uses an efficient algorithm and the index must have been created
 	//
-	int CountAreaMatches(int x1, int x2, int y1, int y2, int window);
+	int CountAreaMatches(double x1, double x2, double y1, double y2, int window);
 
 	//
 	// \brief create a map of boxed sums of the full dot plot by calling CountAreaMatches for each sub grid
