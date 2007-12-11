@@ -340,11 +340,6 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 
 
 
-
-
-
-
-
 /*
 ** helper functions for the higher level language to read the dotstore
 */
