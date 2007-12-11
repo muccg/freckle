@@ -7,6 +7,10 @@ LIBPATH="./libfreckle.so"
 
 from ctypes import *
 
+def __initlibfreckle__():
+	global lib
+	lib=CDLL(LIBPATH)
+
 class Freckle:
 	def __init__(self):
 		self.lib=CDLL(LIBPATH)

@@ -42,6 +42,12 @@ class DotStore:
 	def GetDotLength(self,index):
 		return self.lib.DotStoreGetDotLength(self.dotstore,index)
 	
+	def CreateIndex(self):
+		self.lib.DotStoreCreateIndex(self.dotstore)
+		
+	def DestroyIndex(self):
+		self.lib.DotStoreDestroyIndex(self.dotstore)
+	
 	
 	
 	

@@ -348,19 +348,25 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 /*
 ** helper functions for the higher level language to read the dotstore
 */
-int GetDotX(DotStore *store, int index) { return store->GetDot(index)->x; }
-int GetDotY(DotStore *store, int index) { return store->GetDot(index)->y; }
-int GetDotLength(DotStore *store, int index) { return store->GetDot(index)->length; }
-Dot *GetDot(DotStore *store, int index) { return store->GetDot(index); }
-int GetNumDots(DotStore *store) { return store->GetNum(); }
-void FreeDotStore(DotStore *store)  { delete store; }
-
+DotStore *NewDotStore() { return new DotStore(); }
+void DelDotStore(DotStore *store) { delete store; } 
+int DotStoreGetDotX(DotStore *store, int index) { return store->GetDot(index)->x; }
+int DotStoreGetDotY(DotStore *store, int index) { return store->GetDot(index)->y; }
+int DotStoreGetDotLength(DotStore *store, int index) { return store->GetDot(index)->length; }
+Dot *DotStoreGetDot(DotStore *store, int index) { return store->GetDot(index); }
+int DotStoreGetNumDots(DotStore *store) { return store->GetNum(); }
+void DotStoreCreateIndex(DotStore *store) { store->CreateIndex(); }
+void DotStoreDestroyIndex(DotStore *store) { store->DestroyIndex(); }
 
 /*
 ** helper function to interface with the dotgrid
 */
 DotGrid *NewDotGrid() { return new DotGrid(); }
 void DelDotGrid(DotGrid *grid) { delete grid; }
+void DotGridCreate(DotGrid *grid, int width, int height) { grid->Create(width, height); }
+void DotGridSetPoint(DotGrid *grid, int x, int y, int point) { grid->SetPoint(x,y,point); }
+int DotGridGetPoint(DotGrid *grid, int x, int y) { return grid->GetPoint(x,y); }
+int DotGridGetData(DotGrid *grid, int pos) { return grid->GetData(pos); }
 int DotGridWidth(DotGrid *grid) { return grid->GetWidth(); }
 int DotGridHeight(DotGrid *grid) { return grid->GetHeight(); }
 int DotGridGetSize(DotGrid *grid) { return grid->GetSize(); }

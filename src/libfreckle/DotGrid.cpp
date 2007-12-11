@@ -40,7 +40,7 @@ unsigned char *DotGrid::ToString() const
 	int max=GetMax();
 
 	for(int pos=0; pos<width*height; pos++)
-		out[pos]=(unsigned char)(255.0*(((double)data[pos])-min)/(max-min));
+		out[pos]=(unsigned char)(255.0-(255.0*(((double)data[pos])-min)/(max-min)));
 
 	return out;
 }

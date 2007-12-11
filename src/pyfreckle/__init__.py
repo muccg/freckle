@@ -22,8 +22,9 @@ DotGrid.lib=lib
 DotStore.lib=lib
 
 # now our base library functions
-def buildMappingTables( sequence, ktuplesize ):
-	return lib.buildMappingTables(sequence, ktuplesize)
+#def buildMappingTables( sequence, ktuplesize ):
+	#return lib.buildMappingTables(sequence, ktuplesize)
 
 def makeDotComparison(seq1, seq2, ktuplesize=4, window=10, mismatch=0, minmatch=4):
 	return DotStore(lib.makeDotComparison(seq1,seq2,ktuplesize,window,mismatch,minmatch))
+

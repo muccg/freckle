@@ -43,14 +43,16 @@ DotStore *doComparison(int **tables, const char *tablesequence, const char *news
 DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch);
 
 // helper functions
-int GetDotX(DotStore *store, int index);
-int GetDotY(DotStore *store, int index);
-int GetDotLength(DotStore *store, int index);
-Dot *GetDot(DotStore *store, int index);
-int GetNumDots(DotStore *store);
-void FreeDotStore(DotStore *store);
-// unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window);
-void DumpDotStore(DotStore *store);
+DotStore *NewDotStore();
+void DelDotStore(DotStore *store);
+int DotStoreGetDotX(DotStore *store, int index);
+int DotStoreGetDotY(DotStore *store, int index);
+int DotStoreGetDotLength(DotStore *store, int index);
+Dot *DotStoreGetDot(DotStore *store, int index);
+int DotStoreGetNumDots(DotStore *store);
+void DotStoreCreateIndex(DotStore *store);
+void DotStoreDestroyIndex(DotStore *store);
+
 
 // DotGrid helper functions and wrappers
 DotGrid *NewDotGrid();

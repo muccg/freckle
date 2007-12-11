@@ -22,6 +22,10 @@ DotStore::DotStore()
 //destruct
 DotStore::~DotStore()
 {
+	// delete the index if its there
+	if(index)
+		DestroyIndex();
+
 	// free all allocated chunks
 	DotStorageChunk *next=NULL;
 	for(DotStorageChunk *chunk=head; chunk; chunk=next)
