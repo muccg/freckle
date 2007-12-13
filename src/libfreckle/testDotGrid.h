@@ -62,7 +62,7 @@ public:
 	}
 
 	// testGridToString
-	void testToString(void)
+	void notestToString(void)
 	{
 		DotStore *ds=new DotStore();
 
@@ -82,7 +82,10 @@ public:
 		
 		for(int y=0; y<100; y++)
 			for(int x=0; x<100; x++)
+			{
+				printf("%d,%d => %d\n",x,y,string[y*100+x]);
 				TS_ASSERT( string[y*100+x]==(x==y?255:0) );
+			}
 		
 		delete dg;
 

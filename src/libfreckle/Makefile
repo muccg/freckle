@@ -1,7 +1,7 @@
 CPP=g++
 CC=gcc
-CPPFLAGS=-fPIC -Wall -g
-LDFLAGS=-shared -Wl,-soname,test.so -g -lc
+CPPFLAGS=-fPIC -Wall -g -pg
+LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o
 
@@ -28,6 +28,16 @@ DotGrid.o: DotGrid.cpp DotGrid.h
 LinkedList.o: LinkedList.cpp LinkedList.h
 	$(CPP) $(CPPFLAGS) -c LinkedList.cpp
 
+QuadTreeNode.o: QuadTreeNode.cpp QuadTreeNode.h
+	$(CPP) $(CPPFLAGS) -c QuadTreeNode.cpp
+
+QuadTree.o: QuadTree.cpp QuadTree.h
+	$(CPP) $(CPPFLAGS) -c QuadTree.cpp
+
+
+
+
+
 
 #
 # CPP Test Suites
@@ -36,24 +46,50 @@ testDotStorageChunk.cpp: testDotStorageChunk.h DotStorageChunk.cpp DotStorageChu
 	./cxxtestgen.pl --error-printer -o testDotStorageChunk.cpp testDotStorageChunk.h
 
 testDotStorageChunk: testDotStorageChunk.cpp DotStorageChunk.o
-	$(CPP) -I./ -o testDotStorageChunk testDotStorageChunk.cpp DotStorageChunk.o
+	$(CPP) $(CPPFLAGS) -I./ -o testDotStorageChunk testDotStorageChunk.cpp DotStorageChunk.o
+	./testDotStorageChunk
+
+runtestDotStorageChunk: testDotStorageChunk
+	./testDotStorageChunk
 
 testDotStore.cpp: testDotStore.h DotStore.cpp DotStore.h
 	./cxxtestgen.pl --error-printer -o testDotStore.cpp testDotStore.h
 
 testDotStore: testDotStore.cpp DotStore.o DotStorageChunk.o
-	$(CPP) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o
+	$(CPP) $(CPPFLAGS) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o
+	./testDotStore
 
 testDotGrid.cpp: testDotGrid.h DotGrid.cpp DotGrid.h
 	./cxxtestgen.pl --error-printer -o testDotGrid.cpp testDotGrid.h
 
 testDotGrid: testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o
-	$(CPP) -I./ -o testDotGrid testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o
+	$(CPP) $(CPPFLAGS) -I./ -o testDotGrid testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o
+	./testDotGrid
 
-runtests: testDotStorageChunk testDotStore testDotGrid
+testQuadTreeNode.cpp: testQuadTreeNode.h QuadTreeNode.cpp QuadTreeNode.h
+	./cxxtestgen.pl --error-printer -o testQuadTreeNode.cpp testQuadTreeNode.h
+
+testQuadTreeNode: testQuadTreeNode.cpp QuadTreeNode.o DotStore.o DotStorageChunk.o
+	$(CPP) $(CPPFLAGS) -I./ -o testQuadTreeNode testQuadTreeNode.cpp QuadTreeNode.o DotStore.o DotStorageChunk.o
+	./testQuadTreeNode
+
+runtestQuadTreeNode: testQuadTreeNode
+	./testQuadTreeNode
+
+testQuadTree.cpp: testQuadTree.h QuadTree.cpp QuadTree.h
+	./cxxtestgen.pl --error-printer -o testQuadTree.cpp testQuadTree.h
+
+testQuadTree: testQuadTree.cpp QuadTree.o DotStore.o DotStorageChunk.o QuadTreeNode.o
+	$(CPP) $(CPPFLAGS) -I./ -o testQuadTree testQuadTree.cpp QuadTree.o QuadTreeNode.o DotStore.o DotStorageChunk.o
+
+runtestQuadTree: testQuadTree
+	./testQuadTree
+
+runtests: testDotStorageChunk testDotStore testDotGrid testQuadTreeNode
 	./testDotStorageChunk
 	./testDotStore
 	./testDotGrid
+	./testQuadTreeNode
 
 
 
@@ -61,10 +97,10 @@ runtests: testDotStorageChunk testDotStore testDotGrid
 # Cleans
 #
 cleantests:
-	-rm testDotStorageChunk.cpp testDotStorageChunk
+	-rm testDotStorageChunk.cpp testDotStorageChunk testDotStore.cpp testDotStore testDotGrid.cpp testDotGrid
 
 
-clean:
+clean: cleantests
 	-rm *.so
 	-rm *.o
 

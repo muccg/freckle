@@ -56,8 +56,8 @@ void DotGrid::CalculateGrid(DotStore *source, double x1, double y1, double x2, d
 	assert(ysize>0);
 
 	// check we divide evenly
-	assert( (xsize / scale) - (double)(int)(xsize / scale) == 0.0 );
-	assert( (ysize / scale) - (double)(int)(ysize / scale) == 0.0 );
+// 	assert( (xsize / scale) - (double)(int)(xsize / scale) == 0.0 );
+// 	assert( (ysize / scale) - (double)(int)(ysize / scale) == 0.0 );
 
 	// the size of the averaging window and the remaining strips along the side and bottom
 	int numx=(int)(xsize/scale);
