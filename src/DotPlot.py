@@ -8,9 +8,21 @@ import os.path
 
 class DotPlot:
 	"""
-	This is the DotPlot class
+	\brief Class encapsulating a DotPlot or a sub part thereof
+	\details This is the DotPlot class. Its a python class that helps you very efficiently generate dotplots. It can be used to generate
+	a small area of a large dotplot or a complete dotplot graph with axis rulers, titles and annotations.
+	To use you basically instantiate it with two lists of files. One list of fasta files for the x axis and one list of fasta files
+	for the y axis. Then call methods of the class to generate the graphs. You can also save processed information out and read it
+	back in later to save processing time. For instance you can generate an entire dot plot for a very large sequence and save it
+	to ram or to disk. Then you can use that dot plot info to render different parts of the dot plot later.
 	"""
 	def __init__(self, xfiles, yfiles):
+		"""
+		\brief Creates a DotPlot object using two lists of fasta files as the sequences for the x and y axis.
+		
+		\param xfiles A list of FASTA formatted files to be used for the x axis.
+		\param yfiles A list of FASTA formatted files to be used for the y axis.
+		"""
 		self.filenames=[xfiles,yfiles]
 		
 		# sequence bounds is a list of lists for each dimension. It contains the length of each sequence. eg. for
@@ -44,29 +56,56 @@ class DotPlot:
 	def GetSequenceLength(self,dimension):
 		"""
 		\brief return the length of the full sequence specified for dimension.
-		
 		\param dimension The dimension we want the size of. 0 for x. 1 for y.
+		\return an integer representing the full combined sequence length
 		"""
 		return self.size[dimension]
 		
 	def AssembleFullSequence(self, dimension=0):
-		"""return the sequence of a dimension as one single sequence object. This concatenates all the sequences of all the files together end to end.
-		WARNING: could be VERY memory hungry with large numbers of sequence or files"""
+		"""
+		\brief return the sequence of a dimension as one single sequence object.
+		\details This concatenates all the sequences of all the files together end to end.
+		\warning could be VERY memory hungry with large numbers of sequence or files
+		\param dimension The dimension we want the full sequence of. 0 for x. 1 for y.
+		\return a Seq() object that is the full combined sequence. The Seq object returned has no id.
+		"""
 		assert(dimension==0 or dimension==1)
 		return reduce(lambda x,y: x+y, [reduce(lambda x,y: x+y, [x.seq for x in SeqIO.parse(open(file),"fasta")]) for file in self.filenames[dimension]])
 	
-	def CalculateDotStore(self):
+	def CalculateDotStore(self, ktup=8, window=16, minmatch=8, mismatch=0):
+		"""
+		\brief performs the calculation of the dot plot for the entire sequences
+		\details Calls the underlying libfreckle C code to calculate the dot plot for the entire sequence
+		\warning can be slow with large sequences. 500000 vs 500000 can take a few hours to compute on 3 gigs of 32bit CPU
+		\todo make this method able to calculate sub dot plots.
+		\todo implement ktuple size, window and mismatch
+		\return Nothing
+		"""
+		assert(minmatch>=ktup)
+		assert(ktup>=4)
+		assert(window>=ktup)
 		self.fullseq=[self.AssembleFullSequence(i).data for i in [0,1]]
 		#self.fullseq[1]=self.fullseq[1][::-1]
 		# forward and reverse dot store
-		ktup=8
-		self.dotstore=[makeDotComparison(self.fullseq[0],self.fullseq[1],ktuplesize=ktup,window=2*ktup,minmatch=ktup),makeDotComparison(self.fullseq[0],self.fullseq[1][::-1],ktuplesize=ktup,window=2*ktup,minmatch=ktup)]
+		self.dotstore=[makeDotComparison(self.fullseq[0],self.fullseq[1],ktuplesize=ktup,window=2*ktup,minmatch=ktup),makeDotComparison(self.fullseq[0],self.fullseq[1][::-1],ktuplesize=ktup,window=window,minmatch=minmatch,mismatch=mismatch)]
 	
 	def IndexDotStore(self):
+		"""
+		\brief Indexes the calculated DotStore
+		"""
 		# create indexes
 		[dots.CreateIndex() for dots in self.dotstore]
 	
 	def MakeAverageGrid(self,scale):
+		"""
+		\brief Calculates the reduced score grid
+		\details Uses a fairly optimised algorithm to convert the calculated dot store into a grid of averaged values. These
+		values represent the count of how many dots would be in that area.
+		\todo allow sub windows to be averaged
+		\param scale the scale value for the sizing of the grid. >1 to shrink. eg 10 means the final averaged grid
+		will be 1/10th the size of the full dotplot.
+		\return Nothing
+		"""
 		assert(self.dotstore)
 		self.scale=scale
 		grid=[DotGrid(),DotGrid()]
@@ -82,14 +121,15 @@ class DotPlot:
 		lenseq1=len(self.fullseq[0])
 		lenseq2=len(self.fullseq[1])
 			
-		print lenseq1,lenseq2,scale
-			
 		[g.Calculate(dots,0,0,lenseq1,lenseq2,scale,10) for g,dots in zip(grid,self.dotstore)]
 		grid[1].FlipInplace()
 		grid[0].AddInplace(grid[1])
 		self.grid=grid[0]
 		
 	def MakeImage(self):
+		"""
+		\brief Makes a DotPlot image from the averaged grid data
+		"""
 		string=self.grid.ToString()
 		image=Image.fromstring("L", (self.grid.GetWidth(),self.grid.GetHeight()), string).convert("RGB")
 		
@@ -99,7 +139,12 @@ class DotPlot:
 		return image
 	
 	def AddAxis(self,image):
-		"""takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old"""
+		"""
+		\brief add the image if an axis and sequence annotations to the dotplot image
+		\detail takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old
+		\param image the pre calculated image of the dotplot
+		\return the annotated image
+		"""
 		size=image.size
 		font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 10)
 		
@@ -248,6 +293,9 @@ class DotPlot:
 		
 	
 	def DrawBounds(self,image,filebound=(255,0,0,128),seqbound=(0,0,255,128)):
+		"""
+		\deprecated
+		"""
 		dc = ImageDraw.Draw(image,"RGBA")
 		
 		#dc.text((10, 25), "world", font=font,fill=(0,0,0,255))
@@ -285,7 +333,14 @@ class DotPlot:
 		return image
 		
 	def GetSubSequence(self, dimension, start, end):
-		"""return a sequence that is a combination of one or more sequences, from global seq offset 'start' to 'end'"""
+		"""
+		\brief return an assembled subsequence of the dotplot
+		\detail return a sequence that is a combination of one or more sequences, from global seq offset 'start' to 'end'
+		\param dimension the dimension to retrieve from. 0 for x. 1 for y
+		\param start the start sequence number
+		\param end the end sequence number
+		\return a new sequence object
+		"""
 		assert(dimension==0 or dimension==1)		# atm only 2D
 		assert(start>=0)
 		assert(start<=self.size[dimension])

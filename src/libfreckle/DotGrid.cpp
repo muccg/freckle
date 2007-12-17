@@ -46,7 +46,7 @@ unsigned char *DotGrid::ToString() const
 // 		printf("%d => %d\n",i,histogram[i]);
 
 	for(int pos=0; pos<width*height; pos++)
-		out[pos]=(unsigned char)255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels);
+		out[pos]=(unsigned char)(255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels));
 
 	return out;
 }

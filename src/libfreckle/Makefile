@@ -1,7 +1,9 @@
 CPP=g++
 CC=gcc
-CPPFLAGS=-fPIC -Wall -g -pg
-LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
+# CPPFLAGS=-fPIC -Wall -g -pg
+# LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
+CPPFLAGS=-fPIC -Wall
+LDFLAGS=-shared -Wl,-soname,test.so -lc 
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 

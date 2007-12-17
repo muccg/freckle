@@ -32,22 +32,27 @@
 
 extern "C" {
 
-/*
-** ipow(x,n)
-** =========
-** calculates X to the power of n for integers. Uses tail recursion
+/**
+** \brief calculates the nth power of x.
+** \details Uses tail recursion to calculate x to the power on n
+** \param x the mantissa
+** \param n the exponent
+** \return x^n
 */
 int ipow(int x, int n)
 {
 	return (!n)?1:(n&1)?x*ipow(x,n-1):ipow(x*x,n/2);
 }
 
-/*
-** getTupleID
-** ==========
-** pass this a pointer to the base of a sequence string and a length.
+/**
+** \brief return the tuple id for len characters starting at tuple
+** \details pass this a pointer to the base of a sequence string and a length.
 ** It will return the ktuple index of that sequence. It does this without building
 ** a lookup table to save memory.
+** \param tuple The pointer into the string at the position where the tuple resides
+** \param len How many characters are to be included in the tuple
+** \param bases A pointer to the base pair character set. Default is "Bases" which indicates "ACGT" for Amino Acid sequences use "Aminos"
+** \return returns an integer representing the tuple ID
 */
 TupleID getTupleID(const char *tuple, int len, const char *bases)
 {
@@ -71,17 +76,13 @@ TupleID getTupleID(const char *tuple, int len, const char *bases)
 	return id+1;				// 1 offset rather than 0
 }
 
-/*
-** buildMappingTable
-** =================
-** Given a sequence as a string, this function builds the mapping tables C and D
-**
-** Input:
-**   sequence:		The sequence represented as a string of characters delimited by a NULL
-**   ktuplesize:	The size of the ktuple word in characters
-**
-** Output:
-**   pointertable[2]	An array of two pointer. table[0] points to the beginning of C, and table[1] to D
+/**
+** \brief Given a sequence string, build mapping tables "C" and "D"
+** \details Given a sequence as a string, this function builds the mapping tables C and D as described in Huang and Zhangs paper
+** \param sequence The entire sequence represented as a string of characters terminated by a NULL
+** \param ktuplesize the size of the "ktuple word" in characters
+** \param bases A pointer to the base pair character set. Use "Bases" or "Aminos" from the library
+** \return returns a pointer to a table of two pointers. table[0] points to the location of C, and table[1] to D
 */
 int **buildMappingTables( const char *sequence, int ktuplesize, const char *bases )
 {
@@ -136,6 +137,12 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 	return pointertable;
 }
 
+/**
+** \brief free the mapping tables as returned by buildMappingTables()
+** \param tables the pointer two the two tables as returned by buildMappingTables()
+** \return Nothing
+** \see buildMappingTables
+*/
 void freeMappingTables(int **tables)
 {
 	delete tables[0];
@@ -143,8 +150,11 @@ void freeMappingTables(int **tables)
 	delete tables;
 }
 
-/*
-** sum function just returns the sum of a buffer of ints
+/**
+** \brief returns the sum of a buffer of ints
+** \param buffer a pointer to the buffer
+** \param length how many values to sum
+** \return the sum
 */
 int sum(int *buffer, int length)
 {
@@ -156,11 +166,17 @@ int sum(int *buffer, int length)
 	return sum;
 }
 
-/*
-** matchAboveThreshold
-** ===================
-** given two sequences, seq1 and seq2, and positions in those sequences p1 and p2, compute how long the
+/**
+** \brief compute the matchlength of two subsequences
+** \details given two sequences, seq1 and seq2, and positions in those sequences p1 and p2, compute how long the
 ** two sequences match for. this assumes that a length of 'k' matches already (the tuple size)
+** \param seq1 The first sequence in which we are computing submatches
+** \param p1 The position in the sequence where our initial match was found
+** \param seq2 The second sequence
+** \param p2 The position in the second sequence
+** \param k The ktuple size used in the initial computation
+** \param mismatch How many mismatches to allow during the scan per window size for it still to be considered "a match"
+** \param window The size of the window for appraising mismatches.
 */
 int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int mismatch, int window)
 {
@@ -183,11 +199,17 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 }
 
 
-/*
-** doComparison
-** ============
-** compare one sequence against the table constructed sequence
-**
+/**
+** \brief compare one sequence against the table constructed sequence
+** \details once the tables "C" and "D" are created we can compare another (untabled) sequence against it using this function.
+** This is the main workhorse function you will most probably use in libfreckle.
+** \param tables the tables pointer returned from buildMappingTables()
+** \param tablesequence the original sequence that was used to generate those tables
+** \param newsequence the sequence to compare against the table sequence
+** \param ktuplesize the size of the ktuple used during table construction
+** \param window the window for appraising mismatches in matched subsequences
+** \param mismatch how many characters per window can be allowed to mismatch for it still to be considered "matching"
+** \param minmatch the minimum match length to store a dot for. This must be at least the size of the ktuple.
 */
 DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases )
 {
