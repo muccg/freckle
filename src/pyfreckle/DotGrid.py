@@ -43,6 +43,9 @@ class DotGrid:
 		string=self.lib.DotGridToString(self.dotgrid)
 		return string_at(string,self.GetSize())
 		
+	def CalculateHistogram(self):
+		return self.lib.DotGridCalculateHistogram(self.dotgrid)
+		
 	def Calculate(self, source, x1, y1, x2, y2, scale, window):
 		self.lib.DotGridCalculate(self.dotgrid, source.dotstore, c_double(x1), c_double(y1), c_double(x2), c_double(y2), c_double(scale), int(window))
 		

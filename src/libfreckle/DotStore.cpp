@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <memory.h>
 #include <stdio.h>
+#include <math.h>
 
 //construct
 DotStore::DotStore()
@@ -11,6 +12,8 @@ DotStore::DotStore()
 
 	numchunks=0;
 	numdots=0;
+
+	maxx=maxy=0;
 
 	index=NULL;
 
@@ -68,6 +71,12 @@ void DotStore::CollapseDotStorageChunks()
 // AddDot(x,y,length)
 void DotStore::AddDot(int x, int y, int length)
 {
+	// keep track of maximums
+	if(x>maxx)
+		maxx=x;
+	if(y>maxy)
+		maxy=y;
+
 	// if we have no chunks
 	if(!head && !tail)
 		AddDotStorageChunk();
@@ -144,124 +153,17 @@ void DotStore::CreateIndex()
 		DestroyIndex();
 
 	// create a new index
-	index=new LinkedListVal<IndexYNode *>;
+	index=new QuadTree(0,0,maxx,maxy);
 
 	// go through every dot
 	for(int i=0; i<numdots; i++)
-		IndexDot(GetDot(i));
-}
-
-void DotStore::IndexDot( Dot *dot )
-{
-	assert(dot);
-	
-// 	printf("INDEXING: %d, %d, %d\n",dot->x,dot->y,dot->length);
-
-	// index this dot into the linkedlist index
-	int x=dot->x;
-	int y=dot->y;
-	
-	IndexXNode *xnode=new IndexXNode;
-	memset(xnode,0,sizeof(IndexXNode)); 
-
-	xnode->x=x;
-	xnode->dot=dot;
-
-	IndexYNode *ynode=NULL;
-
-	// find this y in our linked list. loop through the y values
-	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	for(; !i.Done() && (*i)->y<y; i++)
-		;
-
-	// if i is done, then we have scanned the whole list and every y is less than us. so insert a new y at the end of the list
-	if(i.Done())
-	{
-		ynode=new IndexYNode;
-		memset(ynode, 0, sizeof(IndexYNode));
-		
-		ynode->y=y;
-		ynode->child=new LinkedListVal<IndexXNode*>;
-		index->Append(ynode);
-	}
-	// if the iterators node is equal in y value to us, then we belong under this node
-	else if((*i)->y==y)
-	{
-		ynode=*i;
-	}
-	// we need to be created and inserted after the present iterator point
-	else
-	{
-		ynode=new IndexYNode;
-		memset(ynode, 0, sizeof(IndexYNode));
-		
-		ynode->y=y;
-		ynode->child=new LinkedListVal<IndexXNode*>;;
-		index->AddAfter(index->Find(*i), ynode);
-	}
-
-	assert(ynode);				//this should not be NULL by now. it should point to the ynode we belong under
-	
-	// now we work out where in this node we belong
-	// if the node is empty then we can just add out xnode to the list
-	if(!ynode->child->Size())
-	{
-		//add our xnode
-		ynode->child->Append(xnode);
-	}
-	else
-	{
-		//find where we sit on the list
-		LinkedListVal<IndexXNode *>::Iterator j(*(ynode->child));
-		for(; !j.Done() && (*j)->x<x; j++)
-			;
-
-		if(j.Done())
-		{
-			//end of the list. append
-			ynode->child->Append(xnode);
-		}
-		else if(j.First())
-		{
-			//even the first element was above us. insert us as the head
-			ynode->child->Prepend(xnode);
-		}
-		else
-		{
-			//mid list. insert
-			//ynode->child->AddAfter( (LinkedListValElement<IndexXNode*>*)(*j), xnode);
-			ynode->child->AddAfter( ynode->child->Find(*j), xnode);
-		}
-	}
+		index->AddDot(GetDot(i));
 }
 
 void DotStore::DestroyIndex()
 {
 	// nuke the index
 	assert(index);	
-
-	//for every y
-	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	for(; !i.Done(); i++)
-	{
-		//for every x
-		LinkedListVal<IndexXNode*>::Iterator j(*((*i)->child));
-		for(; !j.Done(); j++)
-		{
-			// delete this xnode
-			delete *j;
-
-		}
-		
-		// delete this list
-		(*i)->child->Empty();
-
-		// delete this ynode
-		delete *i;
-	}
-	
-	// delete this list
-	index->Empty();
 
 	delete index;
 
@@ -273,21 +175,7 @@ void DotStore::DestroyIndex()
 void DotStore::DumpIndex()
 {
 	assert(index);
-	printf("DumpIndex()\n");
-
-	//for every y
-	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	//printf("%d,%d,%d\n",(int)index->head,(int)index->tail,(int)index->Length());
-	for(; !i.Done(); i++)
-	{
-		printf("y:%d\n",(*i)->y);
-		//for every x
-		LinkedListVal<IndexXNode*>::Iterator j(*((*i)->child));
-		for(; !j.Done(); j++)
-		{
-			printf("\tx:%d => %d\n",(*j)->x,(int)(*j)->dot);
-		}
-	}
+	index->Dump();
 }
 
 
@@ -296,25 +184,18 @@ Dot *DotStore::GetIndexDot(int x,int y)
 {
 	assert(index);				//we must be indexed
 	
-	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	for(; !i.Done() && (*i)->y<y; i++)
-		;
-	
-	// did we find the y
-	if(i.Done() || (*i)->y!=y)
+	LinkedListVal<Dot *> *result=index->SpatialQuery(x,y,x,y);
+	assert(result->Length()==1 || result->Length()==0);
+
+	if(result->Length()==0)
 		return NULL;
 
-	// search in this for the x.
-	LinkedListVal<IndexXNode *>::Iterator j(*((*i)->child));
-	for(; !j.Done() && (*j)->x<x; j++)
-		;
+	Dot *dot=result->Pop();
 
-	// did we find the x
-	if(j.Done() || (*j)->x!=x)
-		return NULL;
+	delete result;
 
 	// found it
-	return (*j)->dot;
+	return dot;
 }
 
 int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int window)
@@ -327,133 +208,102 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 
 	int count=0;
 
-	// for each y value that is interesting
-	LinkedListVal<IndexYNode*>::Iterator i(*index);
-	for(; !i.Done() && (double)((*i)->y)+0.5<=(y1-dwindow); i++)
-		;
+	// do a spatial query on the index and get a list of matching dots. TODO deal with fractions properly by testing the dots to make sure they should *really* be included
+	LinkedListVal<Dot *> *result=index->SpatialQuery((int)floor(x1-dwindow),(int)floor(y1-dwindow),(int)ceil(x2),(int)ceil(y2));
 
-// 	printf("skipping y: %f\n",(double)((*i)->y));
-
-	//if not done
-	if(!i.Done())
-		//now loop through each applicable y value
-		for(;!i.Done() && (double)((*i)->y)+0.5<=y2; i++)
-		{
-// 			printf("processing y=%f child=%d len(%d)\n",(double)((*i)->y),(int)(*i)->child,(int)(*i)->child->Length());
-			// applicable y value.
-			// go through each x.
-/*			LinkedListVal<IndexXNode *>::Iterator k(*((*i)->child));
-			for(k.First(); !k.Done(); k++)
-				printf("index %d, %d\n",(*k)->x,(*k)->dot);*/
-			
-			LinkedListVal<IndexXNode *>::Iterator j(*((*i)->child));
-			for(; !j.Done() && (double)((*j)->x)+0.5<=(x1-dwindow); j++)
-				;
+	for(LinkedListVal<Dot *>::Iterator i(*result); !i.Done(); i++)
+	{
+		if ( (*i)->x >= x1-dwindow && (*i)->y >= y1-dwindow && (*i)->x < x2 && (*i)->y < y2 )
+		{ 
+			// applicable x and y
+			double x=(double)(*i)->x+0.5;
+			double y=(double)(*i)->y+0.5;
+			double length=(double)(*i)->length;
+			double protrude=length;			//how much protrudes into this calculation square
+			// which zone are we in?
+			// 1. inside the window
+			if( x>=x1 && x<x2 && y>=y1 && y<y2)
+			{
+				//we are inside the window
+				// truncate protrude if we extend outside to the bottom or the right of the window
+				if(x+protrude > x2)
+					protrude=x2-x;
+				if(y+protrude > y2)
+					protrude=y2-y;
+				
 	
-			if(!j.Done())
-				for(;!j.Done() && (double)((*j)->x)+0.5<=x2; j++)
+				//scan down and to the right to see when our next match point comes up or until our length is exhausted. add one for each point
+				if(protrude)
 				{
-					// applicable x and y
-					double x=(double)(*j)->x+0.5;
-					double y=(double)(*i)->y+0.5;
-					double length=(double)(*j)->dot->length;
-					double protrude=length;			//how much protrudes into this calculation square
-					
-// 					int initialcount=count;
-// 					printf("testing (%f,%f),%f,%d\n",x,y,length,initialcount);
-
-					// which zone are we in?
-					// 1. inside the window
-					if( x>=x1 && x<x2 && y>=y1 && y<y2)
-					{
-// 						printf("A\n");
-						//we are inside the window
-						// truncate protrude if we extend outside to the bottom or the right of the window
-						if(x+protrude > x2)
-							protrude=x2-x;
-						if(y+protrude > y2)
-							protrude=y2-y;
-						
-
-// 						printf("protrude=%d\n",protrude);
-						//scan down and to the right to see when our next match point comes up or until our length is exhausted. add one for each point
-						if(protrude)
-						{
-							int xp=(int)x;
-							int yp=(int)y;
-							do
-							{ 
-								count++;
-								protrude-=1.0;
-							} while( (!GetIndexDot(++xp,++yp)) && protrude>=1.0);
-						}
-					}
-					// 2. The parallelogram above the areaand including right on the line
-					else if( x>=(y-y1+x1) && x<(y-y1+x2) )
-					{
-// 						printf("B\n");
-						//we are above the window
-						if(length>y1-y)
-						{
-							//we extend into the window
-							protrude=length-(y1-y);
-							
-// 							printf("length:%f - y:%f + y1:%f = protrude:%f\n",length,y,y1,protrude);
-	
-							// check if we extend out of the window to the right too
-							double sigma=length-(x2-x);
-							if(sigma>0)
-								protrude-=sigma;
-
-							// TODO: Check if we extend out of the bottom (non square window)
-// 							printf("sigma:%f protrude:%f\n",sigma,protrude);
-	
-							int xp=(int)x;
-							int yp=(int)y;
-							do
-							{
-								if(yp>=y1)
-								{
-									count++;
-									protrude-=1.0;
-								}
-							} while((!GetIndexDot(++xp,++yp)) && protrude >=1.0);
-						}
-					}
-					// 3. The parallelogram to the left of the area
-					else if( y>(x-x1+y1) && y<(x-x1+y2) )
-					{
-// 						printf("C\n");
-						//we are to the left of the window
-						if(length>x1-x)
-						{
-							protrude=length-(x1-x);
-							
-							// check if we extend out of the window to the bottom too
-							double sigma=length-(y2-y);
-							if(sigma>0)
-								protrude-=sigma;
-	
-							// TODO: Check if we extend out of the window to the right, too (non square window)
-	
-							int xp=(int)x;
-							int yp=(int)y;
-							do
-							{
-								if(xp>=x1)
-								{
-									count++;
-									protrude-=1.0;
-								}
-							} while((!GetIndexDot(++xp,++yp)) && protrude >= 1.0);
-						}
-					}
-					// else we are not included.
-
-// 					printf("count=%d\n",count-initialcount);
+					int xp=(int)x;
+					int yp=(int)y;
+					do
+					{ 
+						count++;
+						protrude-=1.0;
+					} while( (!GetIndexDot(++xp,++yp)) && protrude>=1.0);
 				}
+			}
+			// 2. The parallelogram above the areaand including right on the line
+			else if( x>=(y-y1+x1) && x<(y-y1+x2) )
+			{
+				//we are above the window
+				if(length>y1-y)
+				{
+					//we extend into the window
+					protrude=length-(y1-y);
+					
+					
+					// check if we extend out of the window to the right too
+					double sigma=length-(x2-x);
+					if(sigma>0)
+						protrude-=sigma;
+			
+					// TODO: Check if we extend out of the bottom (non square window)
+	
+					int xp=(int)x;
+					int yp=(int)y;
+					do
+					{
+						if(yp>=y1)
+						{
+							count++;
+							protrude-=1.0;
+						}
+					} while((!GetIndexDot(++xp,++yp)) && protrude >=1.0);
+				}
+			}
+			// 3. The parallelogram to the left of the area
+			else if( y>(x-x1+y1) && y<(x-x1+y2) )
+			{
+				//we are to the left of the window
+				if(length>x1-x)
+				{
+					protrude=length-(x1-x);
+					
+					// check if we extend out of the window to the bottom too
+					double sigma=length-(y2-y);
+					if(sigma>0)
+						protrude-=sigma;
+						
+					// TODO: Check if we extend out of the window to the right, too (non square window)
+					
+					int xp=(int)x;
+					int yp=(int)y;
+					do
+					{
+						if(xp>=x1)
+						{
+							count++;
+							protrude-=1.0;
+						}
+					} while((!GetIndexDot(++xp,++yp)) && protrude >= 1.0);
+				}
+			}
 		}
+	}
 
-// 	printf("count(%f,%f)-(%f,%f)=%d\n",x1,y1,x2,y2,count);
+	delete result;
+
 	return count;
 }

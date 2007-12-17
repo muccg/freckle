@@ -60,7 +60,8 @@ public:
 		TS_ASSERT(chunk2->GetNext()==NULL);
 		
 		// free resources
-		delete chunk1, chunk2;
+		delete chunk1;
+		delete chunk2;
 	}
 	
 	void testAddDot()

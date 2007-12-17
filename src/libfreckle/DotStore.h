@@ -1,26 +1,9 @@
 #ifndef _DOTSTORE_H_
 #define _DOTSTORE_H_
 
+#include "Dot.h"
 #include "DotStorageChunk.h"
-#include "LinkedListVal.h"
-
-/* for indexing */
-struct structIndexXNode
-{
-	int x;							//our x position 
-	Dot *dot;						//our dot
-};
-typedef struct structIndexXNode IndexXNode;
-
-struct structIndexYNode
-{
-	int y;							// our y position
-	LinkedListVal<struct structIndexXNode *> *child;		// for x nodes
-};
-typedef struct structIndexYNode IndexYNode;
-
-
-
+#include "QuadTree.h"
 
 // Our dot storage class
 class DotStore
@@ -29,6 +12,8 @@ private:
 	DotStorageChunk *head, *tail;
 	int numchunks;
 	int numdots;
+
+	int maxx, maxy;
 	
 	void AddDotStorageChunk();
 	void CollapseDotStorageChunks();
@@ -88,14 +73,13 @@ public:
 ** with each value is the length of the match
 */
 private:
-	LinkedListVal<IndexYNode *> *index;
+	QuadTree *index;
 	int pixwidth;
 	int pixheight;
 	int *averagearray;
 
 public:
 	void CreateIndex();
-	void IndexDot( Dot *dot );
 	void DestroyIndex();
 	void DumpIndex();
 

@@ -91,6 +91,8 @@ public:
 	// turn the averaged grid into a luminance image string for the higher level language
 	unsigned char *ToString() const;
 
+	int *CalculateHistogram() const;
+
 	// \brief Taking data from the specified source, calculate an aveage grid using the window (x1,y1) - (x2,y2) as the source area
 	//
 	// \param source The DotStore from which to take our dot data

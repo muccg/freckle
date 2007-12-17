@@ -66,6 +66,7 @@ unsigned char *DotGridToString(DotGrid *grid);
 void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, double x2, double y2, double scale, int window);
 void DotGridAddInplace(DotGrid *source, DotGrid *add);
 void DotGridFlipInplace(DotGrid *grid);
+int *DotGridCalculateHistogram(DotGrid *grid);
 
 
 

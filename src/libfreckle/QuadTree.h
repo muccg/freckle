@@ -17,10 +17,6 @@ public:
 	QuadTree(Type x1, Type y1, Type x2, Type y2);
 	~QuadTree();
 
-private:
-	
-
-public:
 	void AddDot(Dot *dot);
 	void DelDot(Dot *dot);				// dot MUST not have moved from its insertion position
 

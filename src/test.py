@@ -3,9 +3,9 @@ from random import choice, randint
 from time import time
 from PIL import Image
 
-SIZE=1000.
-OUTPUT=250.
-OUTPUTV=250.
+SIZE=5000.
+OUTPUT=1000.
+OUTPUTV=1000.
 
 # run a dot comparison
 seq1="".join([choice('ACGT') for x in xrange(int(SIZE))])
@@ -57,6 +57,11 @@ gridbackwards.FlipInplace()
 grid.AddInplace(gridbackwards)
 print "done in", time()-t, "seconds"
 	 
+print "calculating histogram..."
+t=time()
+grid.CalculateHistogram()
+print "done in", time()-t, "seconds"
+	   
 # saving as image
 print "saving image.png"
 t=time()

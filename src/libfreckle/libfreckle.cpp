@@ -374,7 +374,7 @@ void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, dou
 }
 void DotGridAddInplace(DotGrid *source, DotGrid *add) { source->AddInplace(add); }
 void DotGridFlipInplace(DotGrid *grid) { grid->FlipInplace(); }
-
+int *DotGridCalculateHistogram(DotGrid *grid) {return grid->CalculateHistogram();}
 
 // unsigned char *DotStoreImageToString(DotStore *store, int xseqsize, int yseqsize, int longest, int window)
 // {

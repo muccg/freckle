@@ -1,7 +1,8 @@
 #ifndef _QUADTREENODE_H_
 #define _QUADTREENODE_H_
 
-#include "DotStore.h"
+#include "Dot.h"
+#include "LinkedListVal.h"
 #include <assert.h>
 #include <stdio.h>
 

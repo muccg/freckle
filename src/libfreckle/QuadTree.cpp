@@ -28,6 +28,7 @@ QuadTree::~QuadTree()
 
 void QuadTree::AddDot(Dot *dot)
 {
+	assert(dot);
 	if(!root)
 	{
 		//first quad node
@@ -46,8 +47,8 @@ void QuadTree::DelDot(Dot *dot)
 // Issues a spatial query on the given rectangle. Assembled a linked list of the results and returns it
 LinkedListVal<Dot *> *QuadTree::SpatialQuery(Type xp1, Type yp1, Type xp2, Type yp2)
 {
-	assert(xp1<xp2);
-	assert(yp1<yp2);
+	assert(xp1<=xp2);
+	assert(yp1<=yp2);
 
 	LinkedListVal<Dot *> *list=new LinkedListVal<Dot *>;
 	

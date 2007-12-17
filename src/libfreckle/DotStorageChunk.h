@@ -3,15 +3,7 @@
 
 #include <malloc.h>			//give us NULL
 #include <assert.h>
-
-struct structDot
-{
-	int x;
-	int y;
-	int length;
-};
-
-typedef struct structDot Dot;
+#include "Dot.h"
 
 #define DOTSTORAGECHUNKSIZE	8192
 

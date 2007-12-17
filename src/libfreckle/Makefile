@@ -3,7 +3,7 @@ CC=gcc
 CPPFLAGS=-fPIC -Wall -g -pg
 LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 
-PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o
+PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 
 all: libfreckle.so
 
@@ -52,25 +52,25 @@ testDotStorageChunk: testDotStorageChunk.cpp DotStorageChunk.o
 runtestDotStorageChunk: testDotStorageChunk
 	./testDotStorageChunk
 
-testDotStore.cpp: testDotStore.h DotStore.cpp DotStore.h
+testDotStore.cpp: testDotStore.h DotStore.cpp DotStore.h 
 	./cxxtestgen.pl --error-printer -o testDotStore.cpp testDotStore.h
 
-testDotStore: testDotStore.cpp DotStore.o DotStorageChunk.o
-	$(CPP) $(CPPFLAGS) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o
+testDotStore: testDotStore.cpp DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
+	$(CPP) $(CPPFLAGS) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
 	./testDotStore
 
 testDotGrid.cpp: testDotGrid.h DotGrid.cpp DotGrid.h
 	./cxxtestgen.pl --error-printer -o testDotGrid.cpp testDotGrid.h
 
-testDotGrid: testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o
-	$(CPP) $(CPPFLAGS) -I./ -o testDotGrid testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o
+testDotGrid: testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
+	$(CPP) $(CPPFLAGS) -I./ -o testDotGrid testDotGrid.cpp DotGrid.o DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
 	./testDotGrid
 
 testQuadTreeNode.cpp: testQuadTreeNode.h QuadTreeNode.cpp QuadTreeNode.h
 	./cxxtestgen.pl --error-printer -o testQuadTreeNode.cpp testQuadTreeNode.h
 
-testQuadTreeNode: testQuadTreeNode.cpp QuadTreeNode.o DotStore.o DotStorageChunk.o
-	$(CPP) $(CPPFLAGS) -I./ -o testQuadTreeNode testQuadTreeNode.cpp QuadTreeNode.o DotStore.o DotStorageChunk.o
+testQuadTreeNode: testQuadTreeNode.cpp QuadTreeNode.o QuadTree.o DotStore.o DotStorageChunk.o
+	$(CPP) $(CPPFLAGS) -I./ -o testQuadTreeNode testQuadTreeNode.cpp QuadTreeNode.o DotStore.o DotStorageChunk.o QuadTree.o
 	./testQuadTreeNode
 
 runtestQuadTreeNode: testQuadTreeNode

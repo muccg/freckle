@@ -9,7 +9,8 @@
 import sys, getopt
 from Bio import SeqIO
 from numpy import array, zeros, int32
-from PIL import Image
+from PIL import Image, ImageDraw
+from time import time
 
 # switch this to True to get debug messages
 DEBUG=True
@@ -68,29 +69,13 @@ def parseopts():
 		elif o in ("-s","--size"):
 			# try and parse the size string
 			try:
-				size=parsesizestring(a)
+				imagesize=int(a)
 			except Exception, e:
 				print "ERROR: cannot parse size string!",str(e)
 				usage()
 				sys.exit(3)
 				
 	return xseq, yseq, outfile, imagesize
-	
-class ParseException(Exception):
-	"""An error parsing the size string"""
-	
-def parsesizestring(string):
-	# extract any unallowed characters with a list comp.
-	unallowed=[a for a in string.lower() if a not in "0123456789x"]
-	if len(unallowed):
-		raise ParseException, "Unallowed characters in string"
-	
-	#split on the 'x'. There should only be two numbers
-	numbers=string.lower().split('x')
-	if len(numbers)!=2:
-		raise ParseException, "Too many parameters in string"
-	
-	return tuple([int(x) for x in numbers])
 	
 def main():
 	xseqfiles,yseqfiles,outfile,imagesize=parseopts()
@@ -105,25 +90,46 @@ def main():
 	
 	plot=DotPlot(xseqfiles,yseqfiles)
 	
-	print "Size = %d x %d"%(plot.GetSequenceLength(0),plot.GetSequenceLength(1))
+	xsize,ysize=plot.GetSequenceLength(0),plot.GetSequenceLength(1)
+	print "Size = %d x %d"%(xsize,ysize)
 	
-	## try to conserve memory.
-	## save the boundaries between files and between sequences.
-	#xseqbounds,yseqbounds=[[[len(x.seq) for x in SeqIO.parse(open(file),"fasta")] for file in seqfiles] for seqfiles in xseqfiles,yseqfiles]
-
-	## save the beginning offsets of each file
-	#xfileoff,yfileoff=[[sum(c) for c in bounds] for bounds in [xseqbounds,yseqbounds] ]
+	# work out scale and thus final image width and height
+	longest=(xsize>ysize) and xsize or ysize
 	
-	## how big is our full matrix
-	#xsize,ysize=[sum([a for a in fileoff]) for fileoff in xfileoff,yfileoff]
+	from math import ceil
 	
-	#print xseqbounds,yseqbounds
-	#print "---"
-	#print xfileoff,yfileoff
-	#print "---"
-	#print xsize,ysize
+	scale=ceil(float(longest)/float(imagesize))
+	scale=float(longest)/float(imagesize)
 	
-	#sys.exit()
+	xoutput=float(xsize)/scale
+	youtput=float(ysize)/scale
+	
+	print "output = %d x %d"%(xoutput,youtput)
+	
+	
+	print "calculating dotplot"
+	t=time()
+	plot.CalculateDotStore()
+	print time()-t,"seconds"
+	
+	print "indexing"
+	t=time()
+	plot.IndexDotStore()
+	print time()-t,"seconds"
+	
+	print "averaging"
+	t=time()
+	plot.MakeAverageGrid(scale)
+	print time()-t,"seconds"
+	
+	print "making image"
+	t=time()
+	image=plot.MakeImage()
+	print time()-t,"seconds"
+	
+	image.save(outfile)
+	
+	sys.exit(0)
 	
 	
 

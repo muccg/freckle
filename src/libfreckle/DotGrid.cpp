@@ -36,13 +36,36 @@ void DotGrid::Destroy()
 unsigned char *DotGrid::ToString() const
 {
 	unsigned char *out=new unsigned char [width*height];
-	int min=GetMin();
-	int max=GetMax();
+	
+	// normalise the histogram
+	int numpixels=width*height;
+	int *histogram=CalculateHistogram();
+
+	// print our histogram
+// 	for(int i=0; i<GetMax()+1;i++)
+// 		printf("%d => %d\n",i,histogram[i]);
 
 	for(int pos=0; pos<width*height; pos++)
-		out[pos]=(unsigned char)(255.0-(255.0*(((double)data[pos])-min)/(max-min)));
+		out[pos]=(unsigned char)255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels);
 
 	return out;
+}
+
+int *DotGrid::CalculateHistogram() const
+{
+	int max=GetMax();
+
+	int *histogram= new int[max+1];
+	memset(histogram, 0, sizeof(int)*(max+1));
+
+	for(int pos=0; pos<width*height; pos++)
+		histogram[data[pos]]++;
+
+	//cumulative histogram
+	for(int i=1; i<max+1;i++)
+		histogram[i]+=histogram[i-1];
+
+	return histogram;
 }
 
 // Calculate a sum from a window on the source dotstore
