@@ -6,7 +6,7 @@
 pyfreckle is the python bindings of libfreckle, to aid in the computation and construction of dot plots
 """
 
-from ctypes import cdll
+from ctypes import cdll, c_char_p, c_int, c_void_p
 import os.path
 
 # dynamically locate our .so file in the same directory as this module
@@ -21,6 +21,14 @@ from DotStore import DotStore
 DotGrid.lib=lib
 DotStore.lib=lib
 
+# set vairables
+lib.Bases=c_char_p.in_dll(lib, "Bases")
+lib.Aminos=c_char_p.in_dll(lib, "Aminos")
+
+# set passing and return types where needed
+lib.buildMappingTables.argtypes = [c_char_p, c_int, c_char_p]
+lib.buildMappingTables.restype = c_void_p
+
 # now our base library functions
 #def buildMappingTables( sequence, ktuplesize ):
 	#return lib.buildMappingTables(sequence, ktuplesize)
@@ -28,3 +36,10 @@ DotStore.lib=lib
 def makeDotComparison(seq1, seq2, ktuplesize=4, window=10, mismatch=0, minmatch=4):
 	return DotStore(lib.makeDotComparison(seq1,seq2,ktuplesize,window,mismatch,minmatch))
 
+def buildMappingTables( sequence, ktuplesize, alphabet=lib.Bases ):
+	return lib.buildMappingTables(sequence, ktuplesize, alphabet)
+
+#DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases=Bases );
+def doComparison(tables, tabseq, newseq, ktup, window, mismatch, minmatch, bases=lib.Bases):
+	return lib.doComparison(tables,tabseq,newseqmktup,window,mismatch,minmatch,bases) 
+	

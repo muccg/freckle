@@ -23,10 +23,10 @@ def usage():
 	print "-x\ta FASTA file for a sequence to be displayed on the x axis"
 	print "-y\ta FASTA file for a sequence to be displayed on the y axis"
 	print "-o\tthe image file to write the output to. Use '-' for stdout"
-	print "-s\tthe output image size. Should be expressed as integers seperated by an 'x'. eg. '800x600'"
+	print "-s\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger."
 	print
 	print "Examples:"
-	print " %s -x seq1.fasta -x seq2.fasta -x seq3.fasta -y seq4.fasta -y seq5.fasta -o graph.png -s 1024x768"%sys.argv[0]
+	print " %s -x seq1.fasta -x seq2.fasta -x seq3.fasta -y seq4.fasta -y seq5.fasta -o graph.png -s 1024"%sys.argv[0]
 	
 def parseopts():
 	"""parse the command line options and return them"""

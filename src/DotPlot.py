@@ -16,12 +16,16 @@ class DotPlot:
 	back in later to save processing time. For instance you can generate an entire dot plot for a very large sequence and save it
 	to ram or to disk. Then you can use that dot plot info to render different parts of the dot plot later.
 	"""
-	def __init__(self, xfiles, yfiles):
+	def __init__(self, xfiles, yfiles, ktup=8, window=16, minmatch=8, mismatch=0):
 		"""
 		\brief Creates a DotPlot object using two lists of fasta files as the sequences for the x and y axis.
 		
 		\param xfiles A list of FASTA formatted files to be used for the x axis.
 		\param yfiles A list of FASTA formatted files to be used for the y axis.
+		\param ktup The ktuple size for tokenisation
+		\param window The size of the window for mismatch comparison
+		\param minmatch The minimum length of a match to be included
+		\param mismatch The number of mismatching sequences that can be included
 		"""
 		self.filenames=[xfiles,yfiles]
 		
@@ -53,6 +57,25 @@ class DotPlot:
 		# add the file offsets so they truly are global instead of local to the individual file
 		self.globalsequencebounds=[ [[b+off for b in a] for a,off in zip(gsb,[0]+gfb[:-1])] for gsb,gfb in zip(self.globalsequencebounds, self.globalfilebounds)]
 		
+		# our libfreckle calculation tables. One for each dimension
+		self.tables=[{},{}]			# one for each dimension. The {} keys are (start,end) pairs with the values being the C tables
+		
+		# where we put our dotstores
+		# indexes is tuple of form (dimension,start,end,compstart,compend)
+		# dimension is the classes dimenstion mapped to the dotstores "y" value. This will usually be 1 unless its a special case
+		self.dotstores={} 
+		
+		# save our parameters
+		assert(minmatch>=ktup)
+		assert(ktup>=4)
+		assert(window>=ktup)
+		self.ktup, self.window, self.minmatch, self.mismatch = ktup,window,minmatch,mismatch
+		
+		# some expressions to process bounds for a dimension
+		self.ProcStart = lambda st: ((st==None) and [0] or [st])[0]
+		self.ProcEnd = lambda dim,en: ((en==None) and [self.GetSequenceLength(dim)] or [en])[0]
+		
+		
 	def GetSequenceLength(self,dimension):
 		"""
 		\brief return the length of the full sequence specified for dimension.
@@ -72,29 +95,72 @@ class DotPlot:
 		assert(dimension==0 or dimension==1)
 		return reduce(lambda x,y: x+y, [reduce(lambda x,y: x+y, [x.seq for x in SeqIO.parse(open(file),"fasta")]) for file in self.filenames[dimension]])
 	
-	def CalculateDotStore(self, ktup=8, window=16, minmatch=8, mismatch=0):
+	def CreateTables(self, dimension=0, start=None, end=None):
+		"""
+		\brief creates a set of look up tables for the sequence for the dimension specified
+		\details Calls the libfreckle code to make the "C" and "D" tables for the sequence. Stores the result internally
+		as state and also returns the object for functional use
+		\param dimension the dimension of the sequence to tokenise
+		\param start the start index number
+		\param end the end index number
+		\return the C table pointers in a tuple as (start, end, seqstring, tables)
+		"""
+		assert(dimension==0 or dimension==1)
+		
+		start=self.ProcStart(start)
+		end=self.ProcEnd(dimension,end)
+		
+		subseq=self.GetSubSequence(dimension,start,end).data
+		table=(start,end,subseq,buildMappingTables(subseq, self.ktup))
+		self.tables[dimension][(start,end)]=table
+		
+		return table
+	
+	def CalculateDotStore(self, dimension=0, start=None, end=None, compstart=None, compend=None ):
 		"""
 		\brief performs the calculation of the dot plot for the entire sequences
 		\details Calls the underlying libfreckle C code to calculate the dot plot for the entire sequence
 		\warning can be slow with large sequences. 500000 vs 500000 can take a few hours to compute on 3 gigs of 32bit CPU
+		\param dimension Which dimension to calculate the dotstore for (other dimension must be indexed)
+		\param start the starting index number
+		\param end the ending index number
 		\todo make this method able to calculate sub dot plots.
 		\todo implement ktuple size, window and mismatch
-		\return Nothing
+		\return (forward dotstore, reverse dotstore)
 		"""
-		assert(minmatch>=ktup)
-		assert(ktup>=4)
-		assert(window>=ktup)
-		self.fullseq=[self.AssembleFullSequence(i).data for i in [0,1]]
-		#self.fullseq[1]=self.fullseq[1][::-1]
-		# forward and reverse dot store
-		self.dotstore=[makeDotComparison(self.fullseq[0],self.fullseq[1],ktuplesize=ktup,window=2*ktup,minmatch=ktup),makeDotComparison(self.fullseq[0],self.fullseq[1][::-1],ktuplesize=ktup,window=window,minmatch=minmatch,mismatch=mismatch)]
+		assert(self.minmatch>=self.ktup)
+		assert(self.ktup>=4)
+		assert(self.window>=self.ktup)
+		assert(self.dimension==0 or self.dimension==1)
+		
+		start=self.ProcStart(start)
+		end=self.ProcEnd(dimension,end)
+		compstart=self.ProcStart(compstart)
+		compend=self.ProcEnd(1-dimension,compend)
+		
+		# make sure our other dimension is indexed in the specified region
+		tables=self.tables[1-dimension][(compstart,compend)]
+		assert(tables)		# other dimension should be indexed
+		
+		# assemble our comparison sequence
+		compseq=self.GetSubSequence(dimension, start, end)
+		
+		# make a dotstore for this region
+		dotstore=doComparison(tables, tables[3], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
+		
+		# and a reverse dotstore
+		revdotstore=doComparison(tables, tables[3], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
+		
+		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
+		
+		return (dotstore, revdotstore)
 	
-	def IndexDotStore(self):
+	def IndexDotStores(self):
 		"""
-		\brief Indexes the calculated DotStore
+		\brief Indexes all the calculated DotStore
 		"""
 		# create indexes
-		[dots.CreateIndex() for dots in self.dotstore]
+		[[dots.CreateIndex() for dots in stores] for stores in self.dotstore.values()]
 	
 	def MakeAverageGrid(self,scale):
 		"""
@@ -332,7 +398,7 @@ class DotPlot:
 			
 		return image
 		
-	def GetSubSequence(self, dimension, start, end):
+	def GetSubSequence(self, dimension=0, start=None, end=None):
 		"""
 		\brief return an assembled subsequence of the dotplot
 		\detail return a sequence that is a combination of one or more sequences, from global seq offset 'start' to 'end'
@@ -342,6 +408,11 @@ class DotPlot:
 		\return a new sequence object
 		"""
 		assert(dimension==0 or dimension==1)		# atm only 2D
+		
+		# preprocess start and end
+		start = self.ProcStart(start)
+		end = self.ProcEnd(dimension,end)
+		
 		assert(start>=0)
 		assert(start<=self.size[dimension])
 		assert(end>=0)
@@ -522,6 +593,13 @@ class TestDotPlot(unittest.TestCase):
 		
 		image=dp.DrawDotPlot(0,0,window=4)
 		image.save("test.png")
+		
+	def testCreateTables(self):
+		dp=DotPlot(self.filelist, self.filelist)
+		
+		tables=dp.CreateTables()
+		
+		print "tables=",tables
 		
 if __name__ == '__main__':
     unittest.main()
