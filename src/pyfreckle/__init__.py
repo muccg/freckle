@@ -28,6 +28,7 @@ lib.Aminos=c_char_p.in_dll(lib, "Aminos")
 # set passing and return types where needed
 lib.buildMappingTables.argtypes = [c_char_p, c_int, c_char_p]
 lib.buildMappingTables.restype = c_void_p
+lib.doComparison.argtypes=[c_void_p, c_char_p, c_char_p, c_int, c_int, c_int, c_int, c_char_p]
 
 # now our base library functions
 #def buildMappingTables( sequence, ktuplesize ):
@@ -41,5 +42,5 @@ def buildMappingTables( sequence, ktuplesize, alphabet=lib.Bases ):
 
 #DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases=Bases );
 def doComparison(tables, tabseq, newseq, ktup, window, mismatch, minmatch, bases=lib.Bases):
-	return lib.doComparison(tables,tabseq,newseqmktup,window,mismatch,minmatch,bases) 
+	return DotStore(lib.doComparison(tables,tabseq,newseq,ktup,window,mismatch,minmatch,bases))
 	

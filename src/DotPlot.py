@@ -63,7 +63,13 @@ class DotPlot:
 		# where we put our dotstores
 		# indexes is tuple of form (dimension,start,end,compstart,compend)
 		# dimension is the classes dimenstion mapped to the dotstores "y" value. This will usually be 1 unless its a special case
-		self.dotstores={} 
+		self.dotstore={} 
+		
+		# the same kind of index but for a calculated average grid
+		self.grid={}
+		
+		# scale is initially unknown
+		self.scale=None
 		
 		# save our parameters
 		assert(minmatch>=ktup)
@@ -116,7 +122,7 @@ class DotPlot:
 		
 		return table
 	
-	def CalculateDotStore(self, dimension=0, start=None, end=None, compstart=None, compend=None ):
+	def CalculateDotStore(self, dimension=1, start=None, end=None, compstart=None, compend=None ):
 		"""
 		\brief performs the calculation of the dot plot for the entire sequences
 		\details Calls the underlying libfreckle C code to calculate the dot plot for the entire sequence
@@ -131,7 +137,7 @@ class DotPlot:
 		assert(self.minmatch>=self.ktup)
 		assert(self.ktup>=4)
 		assert(self.window>=self.ktup)
-		assert(self.dimension==0 or self.dimension==1)
+		assert(dimension==0 or dimension==1)
 		
 		start=self.ProcStart(start)
 		end=self.ProcEnd(dimension,end)
@@ -143,13 +149,13 @@ class DotPlot:
 		assert(tables)		# other dimension should be indexed
 		
 		# assemble our comparison sequence
-		compseq=self.GetSubSequence(dimension, start, end)
+		compseq=self.GetSubSequence(dimension, start, end).data
 		
 		# make a dotstore for this region
-		dotstore=doComparison(tables, tables[3], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
+		dotstore=doComparison(tables[3], tables[2], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
 		
 		# and a reverse dotstore
-		revdotstore=doComparison(tables, tables[3], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
+		revdotstore=doComparison(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
 		
 		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
 		
@@ -162,7 +168,7 @@ class DotPlot:
 		# create indexes
 		[[dots.CreateIndex() for dots in stores] for stores in self.dotstore.values()]
 	
-	def MakeAverageGrid(self,scale):
+	def MakeAverageGrid(self,scale,storekey=None):
 		"""
 		\brief Calculates the reduced score grid
 		\details Uses a fairly optimised algorithm to convert the calculated dot store into a grid of averaged values. These
@@ -170,41 +176,44 @@ class DotPlot:
 		\todo allow sub windows to be averaged
 		\param scale the scale value for the sizing of the grid. >1 to shrink. eg 10 means the final averaged grid
 		will be 1/10th the size of the full dotplot.
+		\param storekey the key to the dotstore. Of the form (dimension, start, end, compstart, compend)
 		\return Nothing
 		"""
-		assert(self.dotstore)
+		if storekey==None:
+			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
+		
+		assert(self.dotstore[storekey])
 		self.scale=scale
+		
+		(dim,start,end,compstart,compend)=storekey
+		
+		width=compend-compstart
+		height=end-start
+		
+		# forward and reverse grid
 		grid=[DotGrid(),DotGrid()]
-		if len(self.fullseq[0])>len(self.fullseq[1]):
-			# wide image
-			lenseq1=ceil(scale)*len(self.fullseq[0])/scale
-			lenseq2=ceil(scale)*len(self.fullseq[1])/scale
-		else:
-			# tall image
-			lenseq1=ceil(scale)*len(self.fullseq[0])/scale
-			lenseq2=ceil(scale)*len(self.fullseq[1])/scale
 			
-		lenseq1=len(self.fullseq[0])
-		lenseq2=len(self.fullseq[1])
-			
-		[g.Calculate(dots,0,0,lenseq1,lenseq2,scale,10) for g,dots in zip(grid,self.dotstore)]
+		[g.Calculate(dots,0,0,width,height,scale,self.window) for g,dots in zip(grid,self.dotstore[storekey])]
 		grid[1].FlipInplace()
 		grid[0].AddInplace(grid[1])
-		self.grid=grid[0]
+		self.grid[storekey]=grid[0]
 		
-	def MakeImage(self):
+	def MakeImage(self, storekey=None):
 		"""
 		\brief Makes a DotPlot image from the averaged grid data
 		"""
-		string=self.grid.ToString()
-		image=Image.fromstring("L", (self.grid.GetWidth(),self.grid.GetHeight()), string).convert("RGB")
+		if storekey==None:
+			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
 		
-		self.DrawBounds(image)
-		image=self.AddAxis(image)
+		string=self.grid[storekey].ToString()
+		image=Image.fromstring("L", (self.grid[storekey].GetWidth(),self.grid[storekey].GetHeight()), string).convert("RGB")
+		
+		self.DrawBounds(image,storekey[1],storekey[3],storekey[2],storekey[4])
+		image=self.AddAxis(image,storekey[1],storekey[3],storekey[2],storekey[4])
 		
 		return image
 	
-	def AddAxis(self,image):
+	def AddAxis(self,image,x1,y1,x2,y2):
 		"""
 		\brief add the image if an axis and sequence annotations to the dotplot image
 		\detail takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old
@@ -249,8 +258,8 @@ class DotPlot:
 		idymaxlen=max([font.getsize(a)[0] for a in ids])
 		
 		# work out the largest sequence number
-		lenseq1=len(self.fullseq[0])
-		lenseq2=len(self.fullseq[1])
+		lenseq1=x2-x1
+		lenseq2=y2-y1
 		digits=len(str(max(lenseq1,lenseq2)))			#this is the maximum number of digits in the sequence string
 		
 		axistextwidth,axistextheight=font.getsize("0"*digits)		#how wide the digit string is in pixels, and how high
@@ -358,7 +367,7 @@ class DotPlot:
 		
 		
 	
-	def DrawBounds(self,image,filebound=(255,0,0,128),seqbound=(0,0,255,128)):
+	def DrawBounds(self,image,xstart,ystart,xend,yend,filebound=(255,0,0,128),seqbound=(0,0,255,128)):
 		"""
 		\deprecated
 		"""
@@ -366,10 +375,8 @@ class DotPlot:
 		
 		#dc.text((10, 25), "world", font=font,fill=(0,0,0,255))
 		
-		xstart=0
-		ystart=0
-		xend=len(self.fullseq[0])
-		yend=len(self.fullseq[1])
+		assert(xend>xstart)
+		assert(yend>ystart)
 		scale=self.scale
 		print "SCALE",self.scale
 		
@@ -597,9 +604,14 @@ class TestDotPlot(unittest.TestCase):
 	def testCreateTables(self):
 		dp=DotPlot(self.filelist, self.filelist)
 		
+		print "tables"
 		tables=dp.CreateTables()
 		
-		print "tables=",tables
+		print "dotstore"
+		dotstore=dp.CalculateDotStore()
+		
+		print "index"
+		dp.IndexDotStores()
 		
 if __name__ == '__main__':
     unittest.main()
