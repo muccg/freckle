@@ -47,7 +47,73 @@ class DotStore:
 		
 	def DestroyIndex(self):
 		self.lib.DotStoreDestroyIndex(self.dotstore)
+		
+	def ToBuffer(self):
+		return self.lib.DotStoreToBuffer(self.dotstore)
 	
+	def FromBuffer(self, buffer):
+		self.lib.DotStoreFromBuffer(self.dotstore, buffer)
+	
+	def FreeBuffer(self, buffer):
+		self.lib.FreeIntBuffer(buffer)
+	
+	def ToString(self):
+		import struct
+		
+		# get our buffer and length
+		buff=self.ToBuffer()
+		length=self.lib.DotStoreBufferSize(self.dotstore,buff)
+		
+		# write it to the stream
+		data=struct.pack("%di"%(length), *buff[:length])
+		
+		# free the buffer
+		self.FreeBuffer(buff)
+		
+		return data
+	
+	def FromString(self, string):
+		import struct
+		
+		data=string[:struct.calcsize("3i")]
+		maxx,maxy,length=struct.unpack("3i",data)
+		
+		# turn into a shitload of ints. We don't need to free this because it was created in python
+		array=apply( c_int*(length+3), struct.unpack("%di"%(length+3),string) )
+		
+		print len(array)
+		
+		#sys.exit(0)
+		
+		self.FromBuffer(array)
+		
+	
+	def Load(self,stream):
+		import struct
+		
+		# read the first three elements from the stream
+		data=stream.read(struct.calcsize("3i"))
+		maxx,maxy,length=struct.unpack("3i",data)
+		
+		print maxx,maxy,length,struct.calcsize("%di"%length)
+		
+		# read length more
+		data+=stream.read(struct.calcsize("%di"%length*3))
+		
+		print "read",len(data)
+		
+		#array=c_int*(length+3)
+		#print array
+		
+		# turn into a shitload of ints. We don't need to free this because it was created in python
+		array=apply( c_int*(length*3+3), struct.unpack("%di"%(length*3+3),data) )
+		
+		print "applied",len(array)
+		
+		self.FromBuffer(array)
+	
+	def Save(self,stream):
+		stream.write(self.ToString())
 	
 	
 	

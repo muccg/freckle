@@ -41,7 +41,9 @@ class DotGrid:
 	
 	def ToString(self):
 		string=self.lib.DotGridToString(self.dotgrid)
-		return string_at(string,self.GetSize())
+		st=string_at(string,self.GetSize())
+		self.lib.FreeString(string)
+		return st
 		
 	def CalculateHistogram(self):
 		return self.lib.DotGridCalculateHistogram(self.dotgrid)
@@ -54,7 +56,16 @@ class DotGrid:
 		
 	def FlipInplace(self):
 		self.lib.DotGridFlipInplace(self.dotgrid)
-
+	
+	
+	def MakeImage(self):
+		"""
+		\brief Makes a DotPlot image from the averaged grid data
+		"""
+		string=self.ToString()
+		from PIL import Image
+		image=Image.fromstring("L", (self.GetWidth(),self.GetHeight()), string).convert("RGB")
+		return image
 
 
 

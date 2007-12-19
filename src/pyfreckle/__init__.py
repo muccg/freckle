@@ -6,7 +6,7 @@
 pyfreckle is the python bindings of libfreckle, to aid in the computation and construction of dot plots
 """
 
-from ctypes import cdll, c_char_p, c_int, c_void_p
+from ctypes import *
 import os.path
 
 # dynamically locate our .so file in the same directory as this module
@@ -29,6 +29,8 @@ lib.Aminos=c_char_p.in_dll(lib, "Aminos")
 lib.buildMappingTables.argtypes = [c_char_p, c_int, c_char_p]
 lib.buildMappingTables.restype = c_void_p
 lib.doComparison.argtypes=[c_void_p, c_char_p, c_char_p, c_int, c_int, c_int, c_int, c_char_p]
+lib.DotStoreToBuffer.restype = POINTER(c_int)
+lib.DotStoreFromBuffer.argtypes = [ c_void_p, POINTER(c_int) ]
 
 # now our base library functions
 #def buildMappingTables( sequence, ktuplesize ):

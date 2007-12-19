@@ -52,7 +52,10 @@ Dot *DotStoreGetDot(DotStore *store, int index);
 int DotStoreGetNumDots(DotStore *store);
 void DotStoreCreateIndex(DotStore *store);
 void DotStoreDestroyIndex(DotStore *store);
-
+int *DotStoreToBuffer(DotStore *store);
+void DotStoreFromBuffer(DotStore *store, int *buffer);
+int DotStoreBufferSize(DotStore *store, int *buffer);
+void FreeIntBuffer(int *buffer);
 
 // DotGrid helper functions and wrappers
 DotGrid *NewDotGrid();
@@ -63,6 +66,7 @@ int DotGridGetSize(DotGrid *grid);
 int DotGridGetMax(DotGrid *grid);
 int DotGridGetMin(DotGrid *grid);
 unsigned char *DotGridToString(DotGrid *grid);
+void FreeString(unsigned char *string);
 void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, double x2, double y2, double scale, int window);
 void DotGridAddInplace(DotGrid *source, DotGrid *add);
 void DotGridFlipInplace(DotGrid *grid);

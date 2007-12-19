@@ -92,7 +92,8 @@ def parseopts():
 			savefile=str(a)
 			
 		elif o in ("-L","--load"):
-			loadfile=str(a)	
+			loadfile=str(a)
+			
 		
 			
 		elif o in ("-s","--size"):
@@ -173,17 +174,31 @@ def main():
 	plot.IndexDotStores()
 	print time()-t,"seconds"
 	
-	print "averaging"
-	t=time()
-	plot.MakeAverageGrid(scale)
-	print time()-t,"seconds"
+	# now we start drawing our subimages
+	width,height=plot.GetSequenceLength(0),plot.GetSequenceLength(1)
 	
-	print "making image"
-	t=time()
-	image=plot.MakeImage()
-	print time()-t,"seconds"
+	for level in xrange(10):
+		order=2**level
+		sw=float(width)/order
+		sh=float(height)/order
+		for xpos in xrange(2**level):
+			for ypos in xrange(2**level):
+				print "processing",level,xpos,ypos
+				grid=plot.MakeAverageGrid(scale/order,xpos*sw,ypos*sh,xpos*sw+sw,ypos*sh+sh)
+				image=grid.MakeImage()
+				image.save("tiled/image-%d-%d-%d.png"%(level,xpos,ypos))
 	
-	image.save(outfile)
+	#print "averaging"
+	#t=time()
+	#plot.MakeAverageGrid(scale)
+	#print time()-t,"seconds"
+	
+	#print "making image"
+	#t=time()
+	#image=plot.MakeImage()
+	#print time()-t,"seconds"
+	
+	#image.save(outfile)
 	
 	sys.exit(0)
 	

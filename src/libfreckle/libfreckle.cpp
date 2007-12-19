@@ -374,7 +374,10 @@ Dot *DotStoreGetDot(DotStore *store, int index) { return store->GetDot(index); }
 int DotStoreGetNumDots(DotStore *store) { return store->GetNum(); }
 void DotStoreCreateIndex(DotStore *store) { store->CreateIndex(); }
 void DotStoreDestroyIndex(DotStore *store) { store->DestroyIndex(); }
-
+int *DotStoreToBuffer(DotStore *store) { return store->ToBuffer(); }
+void DotStoreFromBuffer(DotStore *store, int *buffer) { store->FromBuffer(buffer); }
+int DotStoreBufferSize(DotStore *store, int *buffer) { return store->BufferSize(buffer); }
+void FreeIntBuffer(int *buffer) { assert(buffer); delete buffer; }
 /*
 ** helper function to interface with the dotgrid
 */
@@ -390,6 +393,7 @@ int DotGridGetSize(DotGrid *grid) { return grid->GetSize(); }
 int DotGridGetMax(DotGrid *grid) { return grid->GetMax(); }
 int DotGridGetMin(DotGrid *grid) { return grid->GetMin(); }
 unsigned char *DotGridToString(DotGrid *grid) { return grid->ToString(); }
+void FreeString(unsigned char *string) { assert(string); delete string; }
 void DotGridCalculate(DotGrid *grid, DotStore *source, double x1, double y1, double x2, double y2, double scale, int window)
 {
 	grid->CalculateGrid(source, x1, y1, x2, y2, scale, window);

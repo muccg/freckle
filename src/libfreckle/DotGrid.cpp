@@ -36,10 +36,13 @@ void DotGrid::Destroy()
 unsigned char *DotGrid::ToString() const
 {
 	unsigned char *out=new unsigned char [width*height];
-	
+	assert(out);	
+
 	// normalise the histogram
 	int numpixels=width*height;
 	int *histogram=CalculateHistogram();
+
+	assert(histogram);
 
 	// print our histogram
 // 	for(int i=0; i<GetMax()+1;i++)
@@ -47,6 +50,9 @@ unsigned char *DotGrid::ToString() const
 
 	for(int pos=0; pos<width*height; pos++)
 		out[pos]=(unsigned char)(255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels));
+
+	// free histogram
+	delete histogram;
 
 	return out;
 }
@@ -56,6 +62,7 @@ int *DotGrid::CalculateHistogram() const
 	int max=GetMax();
 
 	int *histogram= new int[max+1];
+	assert(histogram);
 	memset(histogram, 0, sizeof(int)*(max+1));
 
 	for(int pos=0; pos<width*height; pos++)

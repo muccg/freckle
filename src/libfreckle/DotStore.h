@@ -25,6 +25,22 @@ public:
 	void AddDot(int x, int y, int len);
 	Dot *GetDot(int index);
 	void DelDot(int index);
+	
+	//! \brief empty the entire store of all its dots
+	void Empty();
+
+	/**
+	** \brief Turns the dotstore into a buffer for saving to disk/ram/whatever
+	*/
+	int *ToBuffer();
+	
+	//!
+	//! \brief Fills the dotstore by decoding the passed in buffer
+	void FromBuffer(int *buffer);
+
+	//! \brief returns the size in bytes of the buffer that is passed in
+	int BufferSize(int *buffer);
+
 
 	inline int GetDotX(int index)
 	{

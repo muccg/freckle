@@ -25,6 +25,12 @@ DotStore::DotStore()
 //destruct
 DotStore::~DotStore()
 {
+	Empty();
+}
+
+//empty
+void DotStore::Empty()
+{
 	// delete the index if its there
 	if(index)
 		DestroyIndex();
@@ -36,6 +42,20 @@ DotStore::~DotStore()
 		next=chunk->GetNext();			// gotta save this 
 		delete chunk;
 	}
+	
+	head=NULL;
+	tail=NULL;
+
+	numchunks=0;
+	numdots=0;
+
+	maxx=maxy=0;
+
+	index=NULL;
+
+	averagearray=NULL;
+	pixwidth=0;
+	pixheight=0;
 }
 
 void DotStore::AddDotStorageChunk()
@@ -307,3 +327,71 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 
 	return count;
 }
+
+int *DotStore::ToBuffer()
+{
+	// buffer returned is a pointer to an array of ints
+	// the first two ints are the maxx and maxy records
+	// the next int is the number of records (n)
+	// it is followed by n*3 ints of the actual record data
+	
+	// allocate the buffer
+	int buffsize=GetNum()*3+3;
+	int *buffer=new int[buffsize];
+	memset(buffer, 0, sizeof(int)*buffsize);
+
+	int *buffp=buffer;
+
+	// the maxx and maxy
+	*buffp++=maxx;
+	*buffp++=maxy;
+
+	// our record number
+	*buffp++=GetNum();
+
+	// now all the records
+	Dot *dot;
+	for(int i=0; i<GetNum(); i++)
+	{
+		dot=GetDot(i);
+		*buffp++=dot->x;
+		*buffp++=dot->y;
+		*buffp++=dot->length;
+	}
+
+	// we should perfectly fill the allocated buffer
+	assert(buffp == buffer+buffsize);
+
+	return buffer;
+}
+
+void DotStore::FromBuffer(int *buffer)
+{
+	// empty our dots
+	Empty();
+
+	int *buffp=buffer;
+	
+	// maxx and maxy
+	maxx=*buffp++;
+	maxy=*buffp++;
+
+	//number of records
+	int num=*buffp++;
+
+	// read each record
+	for(int i=0; i<num; i++)
+	{
+		AddDot(buffp[0], buffp[1], buffp[2]);
+		buffp+=3;
+	}
+
+	// we should have the same number of records we expected
+	assert(GetNum() == num);
+}
+
+int DotStore::BufferSize(int *buffer)
+{
+	return buffer[2]*3+3;
+}
+

@@ -152,6 +152,57 @@ public:
 		delete ds;
 
 	}
+
+	void testEmpty()
+	{
+		DotStore *ds=new DotStore();
+
+		// one big line down the center
+		for(int i=0; i<300; i++)
+			ds->AddDot(i,i,300-i);
+
+		// index
+		ds->CreateIndex();
+
+		// empty it
+		ds->Empty();
+
+		// check we are empty
+		TS_ASSERT(ds->GetNum()==0);
+		
+		delete ds;
+	}
+
+	void testBufferLoadSave(void)
+	{
+		// create a buffer
+		DotStore *ds=new DotStore();
+		for(int i=0; i<258867; i++)
+			ds->AddDot(i,i,258867-i);
+
+		// save the buffer
+		int *buffer=ds->ToBuffer();
+
+		// delete the dotstore
+		delete ds;
+
+		// create a new store and load the buffer
+		DotStore *ds2=new DotStore();
+		ds2->FromBuffer(buffer);
+
+		// check the points are back
+		TS_ASSERT(ds2->GetNum() == 258867);
+		for(int i=0; i<258867; i++)
+		{
+// 			printf("%d => %d,%d,%d\n",i,ds2->GetDot(i)->x,ds2->GetDot(i)->y,ds2->GetDot(i)->length);
+			TS_ASSERT(ds2->GetDot(i)->x==i);
+			TS_ASSERT(ds2->GetDot(i)->y==i);
+			TS_ASSERT(ds2->GetDot(i)->length==258867-i);
+		}
+
+		delete ds2;
+		delete buffer;
+	}
 };
 
 

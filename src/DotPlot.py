@@ -161,6 +161,24 @@ class DotPlot:
 		
 		return (dotstore, revdotstore)
 	
+	def Load(self, stream):
+		import struct
+		key=struct.unpack( "iiiii", stream.read( struct.calcsize("iiiii") ) )
+		ds=DotStore()
+		ds.Load(stream)
+		rds=DotStore()
+		rds.Load(stream)
+		self.dotstore[key]=(ds,rds)
+	
+	def Save(self,stream):
+		"""Only saves the first dotstore"""
+		import struct
+		stream.write(struct.pack("iiiii",*self.dotstore.keys()[0]))
+		for ds in self.dotstore.values()[0]:
+			ds.Save(stream)
+			
+			
+	
 	def IndexDotStores(self):
 		"""
 		\brief Indexes all the calculated DotStore
@@ -168,7 +186,7 @@ class DotPlot:
 		# create indexes
 		[[dots.CreateIndex() for dots in stores] for stores in self.dotstore.values()]
 	
-	def MakeAverageGrid(self,scale,storekey=None):
+	def MakeAverageGrid(self,scale,x1=None,y1=None,x2=None,y2=None,storekey=None):
 		"""
 		\brief Calculates the reduced score grid
 		\details Uses a fairly optimised algorithm to convert the calculated dot store into a grid of averaged values. These
@@ -177,7 +195,7 @@ class DotPlot:
 		\param scale the scale value for the sizing of the grid. >1 to shrink. eg 10 means the final averaged grid
 		will be 1/10th the size of the full dotplot.
 		\param storekey the key to the dotstore. Of the form (dimension, start, end, compstart, compend)
-		\return Nothing
+		\return the DotGrid class
 		"""
 		if storekey==None:
 			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
@@ -190,13 +208,20 @@ class DotPlot:
 		width=compend-compstart
 		height=end-start
 		
+		if x1==None and x2==None and y1==None and y2==None:
+			x1=y1=0
+			x2=width
+			y2=height
+				
 		# forward and reverse grid
 		grid=[DotGrid(),DotGrid()]
 			
-		[g.Calculate(dots,0,0,width,height,scale,self.window) for g,dots in zip(grid,self.dotstore[storekey])]
+		[g.Calculate(dots,x1,y1,x2,y2,scale,self.window) for g,dots in zip(grid,self.dotstore[storekey])]
 		grid[1].FlipInplace()
 		grid[0].AddInplace(grid[1])
 		self.grid[storekey]=grid[0]
+		
+		return grid[0]
 		
 	def MakeImage(self, storekey=None):
 		"""
