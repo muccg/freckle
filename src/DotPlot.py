@@ -5,6 +5,12 @@ from numpy import array, zeros, int32, vstack, hstack
 from PIL import Image, ImageDraw, ImageFont
 from pyfreckle import *
 import os.path
+from time import time
+from struct import pack, unpack, calcsize
+import pickle
+
+class DotPlotFileError(Exception):
+	pass
 
 class DotPlot:
 	"""
@@ -161,23 +167,117 @@ class DotPlot:
 		
 		return (dotstore, revdotstore)
 	
-	def Load(self, stream):
-		import struct
-		key=struct.unpack( "iiiii", stream.read( struct.calcsize("iiiii") ) )
-		ds=DotStore()
-		ds.Load(stream)
-		rds=DotStore()
-		rds.Load(stream)
-		self.dotstore[key]=(ds,rds)
+	#def Load(self, stream):
+		#import struct
+		#key=struct.unpack( "iiiii", stream.read( struct.calcsize("iiiii") ) )
+		#ds=DotStore()
+		#ds.Load(stream)
+		#rds=DotStore()
+		#rds.Load(stream)
+		#self.dotstore[key]=(ds,rds)
 	
-	def Save(self,stream):
-		"""Only saves the first dotstore"""
-		import struct
-		stream.write(struct.pack("iiiii",*self.dotstore.keys()[0]))
-		for ds in self.dotstore.values()[0]:
-			ds.Save(stream)
+	def Save(self,filename):
+		"""
+		\brief saves the dotplot to a file
+		"""
+		file=open(filename,"wb")
+		
+		# version numbers
+		MAJOR=0
+		MINOR=1
+		
+		# write the header to the file
+		file.write(pack("4sii","_FDP",MAJOR,MINOR))
+		
+		# write the generating parameters
+		# ktup, window, minmatch, mismatch
+		file.write(pack("iiii",self.ktup, self.window, self.minmatch, self.mismatch))
+		
+		# write the generating filenames and filebounds.
+		pickle.dump([self.filenames, self.sequencebounds, self.sequenceboundids,
+			self.filebounds, self.size, self.globalfilebounds, self.globalsequencebounds], file)
+		
+		# write a datetime stamp
+		file.write(pack("i",int(time())))
+		
+		# write number of dotstores
+		file.write(pack("i",len(self.dotstore)))
+		
+		# write out each dot store
+		for key in self.dotstore.keys():
+			value=self.dotstore[key]
 			
+			#write key
+			file.write(pack("iiiii",*key))
 			
+			# write forward and then backward store
+			[ds.Save(file) for ds in value]
+			
+		# done. close the file
+		file.close()
+		
+
+		
+	def Load(self, filename):
+		"""
+		\brief loads the dotplot structure from a file
+		"""
+		file=open(filename,"rb")
+		
+		reader=lambda format: unpack(format, file.read( calcsize( format ) ) )
+		
+		#read the header
+		head=reader("4s")[0]
+		
+		if head != "_FDP":
+			file.close()
+			raise DotPlotFileError, "Unknown file format"
+		
+		#read the version
+		major,minor=reader("ii")
+		
+		#try to call the relevant reader
+		try:
+			result=eval("self.Load_%d_%d(file)"%(major,minor))
+		except AttributeError, e:
+			file.close()
+			raise DotPlotFileError, "Cannot load version %d.%d of the freckle file format. Do you have the latest version?"%(major,minor)
+		
+		file.close()
+		
+		return result
+	
+	def Load_0_1(self,file):
+		"""
+		\brief load version 0.1 of the file format
+		"""
+		reader=lambda format: unpack(format, file.read( calcsize( format ) ) )
+		
+		# read the generating parameters
+		# ktup, window, minmatch, mismatch
+		self.ktup,self.window,self.minmatch,self.mismatch=reader("iiii")
+		
+		# write the generating filenames and filebounds.
+		[self.filenames, self.sequencebounds, self.sequenceboundids,
+			self.filebounds, self.size, self.globalfilebounds, self.globalsequencebounds]=pickle.load(file)
+		
+		# read the datetime stamp
+		self.generatedon=reader("i")[0]
+		
+		# read number of dotstores
+		numstores=reader("i")[0]
+		
+		# read each dotstore in
+		self.dotstore={}
+		
+		for i in xrange(numstores):
+			key=reader("iiiii")
+			fds,rds=DotStore(),DotStore()
+			fds.Load(file)
+			rds.Load(file)
+			self.dotstore[key]=(fds,rds)
+		
+		
 	
 	def IndexDotStores(self):
 		"""

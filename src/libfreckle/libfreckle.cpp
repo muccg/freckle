@@ -213,7 +213,7 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 */
 DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases )
 {
-	assert(mismatch<window);
+	assert(mismatch<=window);
 	assert(window>=ktuplesize);
 
 	int *C, *D;

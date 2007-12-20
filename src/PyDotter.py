@@ -118,11 +118,39 @@ def main():
 		print "window",window
 		print "minmatch",minmatch
 		print "mismatch",mismatch
+		print "loadfile",loadfile
 		print "savefile",savefile
 	
 	from DotPlot import DotPlot
 	
 	plot=DotPlot(xseqfiles,yseqfiles,ktup, window, minmatch, mismatch)
+	
+	if loadfile!=None:
+		#load the dotstore from a previous run
+		print "Loading dotplot"
+		t=time()
+		plot.Load(loadfile)
+		print time()-t,"seconds"
+	else:
+		#calculate it
+		print "create tables"
+		t=time()
+		plot.CreateTables()
+		print time()-t,"seconds"
+	
+		print "calculating dotplot"
+		t=time()
+		plot.CalculateDotStore()
+		print time()-t,"seconds"
+	
+	
+	if loadfile==None and savefile!=None:
+		#save the dotstore
+		print "Saving dotplot"
+		plot.Save(savefile)
+		
+	
+	
 	
 	xsize,ysize=plot.GetSequenceLength(0),plot.GetSequenceLength(1)
 	print "Size = %d x %d"%(xsize,ysize)
@@ -141,32 +169,13 @@ def main():
 	print "output = %d x %d"%(xoutput,youtput)
 	
 	
-	print "create tables"
-	t=time()
-	plot.CreateTables()
-	print time()-t,"seconds"
-	
-	if loadfile!=None:
-		#load the dotstore from a previous run
-		print "Loading dotplot"
-		t=time()
-		file=open(loadfile,'rb')
-		plot.Load(file)
-		file.close()
-		print time()-t,"seconds"
-	else:
-		#calculate it
-		print "calculating dotplot"
-		t=time()
-		plot.CalculateDotStore()
-		print time()-t,"seconds"
 	
 	
-	if loadfile==None and savefile!=None:
-		#save the dotstore
-		file=open(savefile,'wb')
-		plot.Save(file)
-		file.close()
+	
+	
+	
+	
+	
 	
 	print "indexing"
 	t=time()
