@@ -167,15 +167,6 @@ class DotPlot:
 		
 		return (dotstore, revdotstore)
 	
-	#def Load(self, stream):
-		#import struct
-		#key=struct.unpack( "iiiii", stream.read( struct.calcsize("iiiii") ) )
-		#ds=DotStore()
-		#ds.Load(stream)
-		#rds=DotStore()
-		#rds.Load(stream)
-		#self.dotstore[key]=(ds,rds)
-	
 	def Save(self,filename):
 		"""
 		\brief saves the dotplot to a file
@@ -343,6 +334,10 @@ class DotPlot:
 		\brief add the image if an axis and sequence annotations to the dotplot image
 		\detail takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old
 		\param image the pre calculated image of the dotplot
+		\param x1 the left hand edge sequence offset
+		\param y1 the top edge sequence offset
+		\param x2 the right hand edge sequence offset
+		\param y2 the bottom edge sequence offset
 		\return the annotated image
 		"""
 		size=image.size
@@ -375,12 +370,19 @@ class DotPlot:
 		
 		files=[[os.path.basename(a) for a in self.filenames[axis]] for axis in (0,1)]
 		fileymaxlen=max([font.getsize(a)[0] for a in files[1]])
-		
+		filexmaxlen=max([font.getsize(a)[0] for a in files[0]])
 		
 		# find the side width
 		ids=[]
 		[[ids.append(a) for a in b] for b in self.sequenceboundids[1]]		# 1 is dimension (y)
 		idymaxlen=max([font.getsize(a)[0] for a in ids])
+		
+		# find the bottom height
+		idys=[]
+		[[idys.append(a) for a in b] for b in self.sequenceboundids[0]]		# 0 is dimension (x)
+		idxmaxlen=max([font.getsize(a)[0] for a in idys])
+		
+		bottomimagesize=(idxmaxlen+filexmaxlen+2*SIDEGUTTER, size[0])
 		
 		# work out the largest sequence number
 		lenseq1=x2-x1
@@ -390,12 +392,12 @@ class DotPlot:
 		axistextwidth,axistextheight=font.getsize("0"*digits)		#how wide the digit string is in pixels, and how high
 		ticklength=10
 		
-		aisize=(size[0]+axistextwidth+ticklength+2+2*XOFF+idymaxlen+fileymaxlen+2*SIDEGUTTER,size[1]+2+2*YOFF+axistextheight+ticklength+titleheight+TITLEGAP)
+		aisize=(size[0]+axistextwidth+ticklength+2+2*XOFF+idymaxlen+fileymaxlen+2*SIDEGUTTER,size[1]+2+2*YOFF+axistextheight+ticklength+titleheight+TITLEGAP+bottomimagesize[0]+YOFF)
 		axisimage=Image.new("RGB",aisize,(255,255,255))
 		
 		dc = ImageDraw.Draw(axisimage,"RGBA")
-		dc.rectangle( [(axistextwidth+ticklength+XOFF,axistextheight+ticklength+YOFF+titleheight+TITLEGAP),(aisize[0]-XOFF-1-idymaxlen-fileymaxlen-2*SIDEGUTTER,aisize[1]-YOFF-1)], fill=(0,0,0,255) )
-		dc.rectangle( [(axistextwidth+ticklength+XOFF+2,axistextheight+ticklength+YOFF+titleheight+TITLEGAP+2),(aisize[0]-XOFF+1-idymaxlen-fileymaxlen-2*SIDEGUTTER,aisize[1]-YOFF+1)], fill=(0,0,0,255) )
+		dc.rectangle( [(axistextwidth+ticklength+XOFF,axistextheight+ticklength+YOFF+titleheight+TITLEGAP),(aisize[0]-XOFF-1-idymaxlen-fileymaxlen-2*SIDEGUTTER,aisize[1]-YOFF-1-bottomimagesize[0]-YOFF)], fill=(0,0,0,255) )
+		dc.rectangle( [(axistextwidth+ticklength+XOFF+2,axistextheight+ticklength+YOFF+titleheight+TITLEGAP+2),(aisize[0]-XOFF+1-idymaxlen-fileymaxlen-2*SIDEGUTTER,aisize[1]-YOFF+1-+bottomimagesize[0]-YOFF)], fill=(0,0,0,255) )
 		axisimage.paste(image,(axistextwidth+ticklength+1+XOFF,axistextheight+ticklength+1+YOFF+titleheight+TITLEGAP))
 		
 		# VERTICAL SCALE
@@ -484,9 +486,57 @@ class DotPlot:
 			
 			fyoff+=1
 		
+		################################################
 		# horizontal annotations at the image bottom
+		# we draw these in the regular way, then rotate them and paste them at the bottom
+		################################################
+		# find the side width
+		ids=idys
 		
+		bottomimage=Image.new("RGB",bottomimagesize,(255,255,255))
+		dc = ImageDraw.Draw(bottomimage,"RGBA")
 		
+		# size sequence annotations
+		axis=0
+		files=self.filenames
+		boundids=self.sequenceboundids
+		seqxs=[0]+self.seqxbounds
+		seqxoff=1
+		for file in boundids[axis]:
+			for ids in file:
+				idx=seqxs[seqxoff]-(seqxs[seqxoff]-seqxs[seqxoff-1])/2
+				
+				textw,texth=font.getsize(ids)
+				y=bottomimagesize[1]-idx-texth/2
+				dc.text( (0,y), ids, fill=(0,0,255,255), font=font)
+				
+				seqxoff+=1
+		
+		# file annotations
+		axis=0
+		files=[os.path.basename(a) for a in self.filenames[axis]]
+		fbounds=[0]+[int(a/self.scale) for a in self.globalfilebounds[axis]]
+		fyoff=1
+		for file in files:
+			idy=fbounds[fyoff]-(fbounds[fyoff]-fbounds[fyoff-1])/2
+			
+			fnamew,fnameh=font.getsize(file)
+			x=bottomimagesize[0]-filexmaxlen
+			tops=0
+			y=bottomimagesize[1]-tops-idy-fnameh/2
+			print x,y
+			dc.text( (x,y), file, fill=(255,0,0,255), font=font)
+			
+			# draw the lines
+			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)) ], fill=(255,0,0,128) )
+			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff]+tops-1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1)) ], fill=(255,0,0,128) )
+			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1))], fill=(255,0,0,128))
+			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3,(y+fnameh/2)),(bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=(255,0,0,128))
+			
+			fyoff+=1
+		
+		# rotate the image
+		axisimage.paste(bottomimage.rotate(270),(axistextwidth+ticklength+2+XOFF,size[1]+2+2*YOFF+axistextheight+ticklength+titleheight+TITLEGAP))
 			
 		return axisimage
 		
@@ -510,6 +560,7 @@ class DotPlot:
 		seqybounds=[int(float(value-ystart)/scale) for value in reduce(lambda a,b:a+b,self.globalsequencebounds[1]) if value>=ystart and value<=yend]
 			
 		self.seqybounds=seqybounds[:]
+		self.seqxbounds=seqxbounds[:]
 			
 		# find bounds that are in this range and store their relative position in this image
 		filexbounds=[int(float(value-xstart)/scale) for value in self.globalfilebounds[0] if value>=xstart and value<=xend]
