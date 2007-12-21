@@ -338,6 +338,7 @@ class DotPlot:
 		\param y1 the top edge sequence offset
 		\param x2 the right hand edge sequence offset
 		\param y2 the bottom edge sequence offset
+		\todo refactor this beheamoth
 		\return the annotated image
 		"""
 		size=image.size
@@ -365,8 +366,30 @@ class DotPlot:
 		
 		SIDEGUTTER=30
 		
-		MAJORSCALE=10000
-		MINORSCALE=1000
+		# autocalculate our scale marks
+		
+		majors={
+				0:	(10,1),
+				50:	(500,50),
+				100:	(1000,250),
+				500:	(5000,1000),
+				1000:	(10000,1000),
+				5000:	(100000,10000),
+				10000:	(100000,10000),
+				100000:	(1000000,100000),
+				1000000:	(10000000,1000000),
+				10000000:	(100000000,10000000),
+				100000000:	(1000000000,100000000),
+				
+			}
+			
+		
+		location=sorted(majors.keys()+[self.scale]).index(self.scale)
+		print "LOCATION",location,sorted(majors.keys())[location]
+		MAJORSCALE,MINORSCALE=majors[sorted(majors.keys())[location]]
+		
+		print "MAJOR",MAJORSCALE
+		print "MINOR",MINORSCALE
 		
 		files=[[os.path.basename(a) for a in self.filenames[axis]] for axis in (0,1)]
 		fileymaxlen=max([font.getsize(a)[0] for a in files[1]])
