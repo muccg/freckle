@@ -42,6 +42,10 @@ public:
 	int BufferSize(int *buffer);
 
 
+	//! \brief optimise the store to remove runs that overlay another run
+	//! \param index the quadtree index of the dotstore that is used to speed optimisation
+	void Optimise(QuadTree *index);
+
 	inline int GetDotX(int index)
 	{
 		return GetDot(index)->x;

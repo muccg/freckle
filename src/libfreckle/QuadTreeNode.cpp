@@ -161,4 +161,49 @@ void QuadTreeNode::SpatialQueryRecurse(LinkedListVal<Dot *> *list, Type xp1, Typ
 
 }
 
+// deletes a Dot from the store. Recursive function
+void QuadTreeNode::DeleteDot(Dot *dot)
+{
+	assert(dot);
+
+	int xp=dot->x;
+	int yp=dot->y;
+
+	if(isLeaf())
+	{
+		// check each dot in the leaf to see if we are one.
+		for(int i=0; i<NUMDOTS; i++)
+			if(store.dot[i])
+				if(store.dot[i]->x ==xp && store.dot[i]->y == yp)
+				{
+					// this is the dot. lets delete it
+					// we move the dots above down and set the end one to NULL
+					for(int j=i; j<NUMDOTS-1;j++)
+						store.dot[j]=store.dot[j+1];
+					store.dot[NUMDOTS-1]=NULL;
+
+					return;
+				}
+		
+		// if we get to here then the Dot was not found in the tree, or the dot has moved since it was added
+		// this is very bad and we should die
+		Dump();
+		assert(0);
+	}
+	else if(isNode())
+	{
+		if(store.child[NW] && xp<x && yp<y)
+			store.child[NW]->DeleteDot(dot);
+		
+		if(store.child[NE] && xp>=x && yp<y)
+			store.child[NE]->DeleteDot(dot);
+		
+		if(store.child[SW] && xp<x && yp>=y)
+			store.child[SW]->DeleteDot(dot);
+		
+		if(store.child[SE] && xp>=x && yp>=y)
+			store.child[SE]->DeleteDot(dot);
+	}
+}
+
 

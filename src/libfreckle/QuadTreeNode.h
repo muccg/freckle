@@ -40,8 +40,11 @@ public:
 	QuadTreeNode(Type x1, Type y1, Type x2, Type y2);
 	~QuadTreeNode();
 
-	// recursively add a dot
+	//! \brief recursively add a dot
 	void AddDot(Dot *dot);
+
+	//! \brief deletes a Dot from the store. Recursive function
+	void DeleteDot(Dot *dot);
 
 	// turn our existing leaf into a node
 	void LeafToNode();

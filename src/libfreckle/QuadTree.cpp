@@ -41,6 +41,11 @@ void QuadTree::AddDot(Dot *dot)
 
 void QuadTree::DelDot(Dot *dot)
 {
+	assert(dot);
+	assert(root);
+
+	//delete the dot from the quadtree
+	root->DeleteDot(dot);
 	
 }
 

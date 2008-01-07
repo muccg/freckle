@@ -395,3 +395,11 @@ int DotStore::BufferSize(int *buffer)
 	return buffer[2]*3+3;
 }
 
+void DotStore::Optimise(QuadTree *index)
+{
+	// start with the first dot. We scan diagonally down checking for linked matched sequences
+	// if a dot and length is completely contained in another dot and length then we remove the
+	// contained one from the DotStore AND the index.
+
+}
+

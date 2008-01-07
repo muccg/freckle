@@ -17,7 +17,10 @@ public:
 	QuadTree(Type x1, Type y1, Type x2, Type y2);
 	~QuadTree();
 
+	//! \brief add a dots location to the index 
 	void AddDot(Dot *dot);
+
+	//! \brief delete a dot from the index. Dot must have the same position as where it sits in the tree
 	void DelDot(Dot *dot);				// dot MUST not have moved from its insertion position
 
 	LinkedListVal<Dot *> *SpatialQuery(Type x1, Type y1, Type x2, Type y2);
