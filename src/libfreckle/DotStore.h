@@ -41,10 +41,8 @@ public:
 	//! \brief returns the size in bytes of the buffer that is passed in
 	int BufferSize(int *buffer);
 
-
-	//! \brief optimise the store to remove runs that overlay another run
-	//! \param index the quadtree index of the dotstore that is used to speed optimisation
-	void Optimise(QuadTree *index);
+	//! \brief filter out any dots that are less than a particular length
+	int Filter(int minlength);
 
 	inline int GetDotX(int index)
 	{

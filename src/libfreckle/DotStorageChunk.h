@@ -11,6 +11,10 @@ class DotStorageChunk
 {
 private:
 	Dot	dots[DOTSTORAGECHUNKSIZE];
+	
+	// this is not the most efficient way RAM wise but it will do for now
+	bool	inuse[DOTSTORAGECHUNKSIZE];
+
 	int	num;
 
 	// doubly linked list of storage chunks
@@ -29,17 +33,17 @@ public:
 
 	inline int GetDotX(int num)
 	{
-		return dots[num].x;
+		return GetDot(num)->x;
 	}
 
 	inline int GetDotY(int num)
 	{
-		return dots[num].y;
+		return GetDot(num)->y;
 	}
 
 	inline int GetDotLength(int num)
 	{
-		return dots[num].length;
+		return GetDot(num)->length;
 	}
 
 	inline void	SetNext(DotStorageChunk *chunk)

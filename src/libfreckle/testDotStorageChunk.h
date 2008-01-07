@@ -111,6 +111,7 @@ public:
 
 			//delete the head
 			chunk->DelDot(0);
+			dp=chunk->GetDot(0);
 		}
 		TS_ASSERT(chunk->IsEmpty());
 

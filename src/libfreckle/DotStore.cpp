@@ -118,24 +118,24 @@ void DotStore::AddDot(int x, int y, int length)
 	}
 }
 
-Dot *DotStore::GetDot(int index)
+Dot *DotStore::GetDot(int ind)
 {
-	assert(index>=0);
-	if(!head || !tail || !numdots || index>numdots-1)
+	assert(ind>=0);
+	if(!head || !tail || !numdots || ind>numdots-1)
 		return NULL;			//no dots here, or index too high or too low
 
 	DotStorageChunk *chunk=head;
 	
 	// return the pointer to dot with index 'index'
-	while(index>=chunk->GetNum())
+	while(ind>=chunk->GetNum())
 	{
-		index-=chunk->GetNum();
+		ind-=chunk->GetNum();
 		chunk=chunk->GetNext();
 		assert(chunk);			// if we run out of chunks something horrid has happened. Because above we tested if index was too high
 	}
 
 	//so chunk now contains the relevant dot. return it
-	return chunk->GetDot(index);
+	return chunk->GetDot(ind);
 }
 
 void DotStore::DelDot(int index)
@@ -395,11 +395,35 @@ int DotStore::BufferSize(int *buffer)
 	return buffer[2]*3+3;
 }
 
-void DotStore::Optimise(QuadTree *index)
+int DotStore::Filter(int minlength)
 {
-	// start with the first dot. We scan diagonally down checking for linked matched sequences
-	// if a dot and length is completely contained in another dot and length then we remove the
-	// contained one from the DotStore AND the index.
+	// loop through every dot and if they are less that the minlength then delete them
+	int num=0;
+	int deleted=0;
+	Dot *dot=NULL;
+	while(num<GetNum())
+	{
+		dot=GetDot(num);
+		if(dot->length < minlength)
+		{
+			// if we are indexed remove this from the index
+			if(index)
+				index->DelDot(dot);
 
+			// delete this one
+			DelDot(num);
+			deleted++;
+	
+			// because the array "moves" down in terms of index number, we don't need to increase num here
+		}
+		else
+		{
+			// that one was fine. move onwards
+			num++;
+		}
+
+	}
+
+	return deleted;							// return a count of how many dots were deleted.
 }
 
