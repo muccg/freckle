@@ -9,6 +9,37 @@ from time import time
 from struct import pack, unpack, calcsize
 import pickle
 
+def locatefile(filename):
+	"""use the 'locate' shell command to find all the locations of a file"""
+	import popen2
+	
+	stdout, stdin = popen2.popen2("locate %s"%filename, mode='r')
+	stdin.close()
+	res=[(a[-1]=='\n') and a[:-1] or a for a in stdout.readlines()]
+	stdout.close()
+	return res
+	
+def getfont(filename,size):
+	try:
+		font = ImageFont.truetype(filename, size)
+	except IOError, e:
+		#find the font file
+		basename=os.path.basename(filename)
+		locations=locatefile(basename)
+		if len(locations)==0:
+			raise Exception, "Cannot find %s font"%basename
+		
+		font=None
+		index=0
+		while font==None:
+			try:
+				font = ImageFont.truetype(locations[index],size)
+			except IOError, e:
+				index+=1
+				if index>=len(locations):
+					raise Exception, "Cannot find %s font"%basename
+	return font
+	
 class DotPlotFileError(Exception):
 	pass
 
@@ -314,7 +345,7 @@ class DotPlot:
 		
 		return grid[0]
 		
-	def MakeImage(self, storekey=None):
+	def MakeImage(self, storekey=None,major=None,minor=None):
 		"""
 		\brief Makes a DotPlot image from the averaged grid data
 		"""
@@ -325,11 +356,11 @@ class DotPlot:
 		image=Image.fromstring("L", (self.grid[storekey].GetWidth(),self.grid[storekey].GetHeight()), string).convert("RGB")
 		
 		self.DrawBounds(image,storekey[1],storekey[3],storekey[2],storekey[4])
-		image=self.AddAxis(image,storekey[1],storekey[3],storekey[2],storekey[4])
+		image=self.AddAxis(image,storekey[1],storekey[3],storekey[2],storekey[4],major=major,minor=minor)
 		
 		return image
 	
-	def AddAxis(self,image,x1,y1,x2,y2):
+	def AddAxis(self,image,x1,y1,x2,y2,major=None,minor=None):
 		"""
 		\brief add the image if an axis and sequence annotations to the dotplot image
 		\detail takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old
@@ -342,9 +373,8 @@ class DotPlot:
 		\return the annotated image
 		"""
 		size=image.size
-		font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 10)
-		
-		titlefont = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
+		font = getfont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 10)
+		titlefont = getfont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
 		namelist=["",""]
 		if len(self.filenames[0])==1:
 			namelist[0]=os.path.basename(self.filenames[0][0])
@@ -368,28 +398,34 @@ class DotPlot:
 		
 		# autocalculate our scale marks
 		
-		majors={
-				0:	(10,1),
-				50:	(500,50),
-				100:	(1000,250),
-				500:	(5000,1000),
-				1000:	(10000,1000),
-				5000:	(100000,10000),
-				10000:	(100000,10000),
-				100000:	(1000000,100000),
-				1000000:	(10000000,1000000),
-				10000000:	(100000000,10000000),
-				100000000:	(1000000000,100000000),
-				
-			}
+		if major==None and minor!=None:
+			major=10*minor
+		elif minor==None and major!=None:
+			minor=major/10
+		elif minor==None and major==None:
 			
+			majors={
+					0:	(10,1),
+					50:	(500,50),
+					100:	(10000,2000),
+					500:	(50000,10000),
+					5000:	(100000,10000),
+					10000:	(100000,10000),
+					100000:	(1000000,100000),
+					1000000:	(10000000,1000000),
+					10000000:	(100000000,10000000),
+					100000000:	(1000000000,100000000),
+					
+				}
+				
+			
+			location=sorted(majors.keys()+[self.scale]).index(self.scale)
+			major,minor=majors[sorted(majors.keys())[location]]
 		
-		location=sorted(majors.keys()+[self.scale]).index(self.scale)
-		print "LOCATION",location,sorted(majors.keys())[location]
-		MAJORSCALE,MINORSCALE=majors[sorted(majors.keys())[location]]
+		assert(major!=None)
+		assert(minor!=None)
 		
-		print "MAJOR",MAJORSCALE
-		print "MINOR",MINORSCALE
+		MINORSCALE,MAJORSCALE=minor,major
 		
 		files=[[os.path.basename(a) for a in self.filenames[axis]] for axis in (0,1)]
 		fileymaxlen=max([font.getsize(a)[0] for a in files[1]])
@@ -547,7 +583,6 @@ class DotPlot:
 			x=bottomimagesize[0]-filexmaxlen
 			tops=0
 			y=bottomimagesize[1]-tops-idy-fnameh/2
-			print x,y
 			dc.text( (x,y), file, fill=(255,0,0,255), font=font)
 			
 			# draw the lines
@@ -576,7 +611,6 @@ class DotPlot:
 		assert(xend>xstart)
 		assert(yend>ystart)
 		scale=self.scale
-		print "SCALE",self.scale
 		
 		#find sequence bounds and store their relative position to this image
 		seqxbounds=[int(float(value-xstart)/scale) for value in reduce(lambda a,b:a+b,self.globalsequencebounds[0]) if value>=xstart and value<=xend]

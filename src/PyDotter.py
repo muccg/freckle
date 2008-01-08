@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 from time import time
 
 # switch this to True to get debug messages
-DEBUG=True
+DEBUG=False
 
 def usage():
 	"""print the usage of the programme"""
@@ -22,12 +22,16 @@ def usage():
 	print "-h\tthis helpful blurb"
 	print "-x\ta FASTA file for a sequence to be displayed on the x axis"
 	print "-y\ta FASTA file for a sequence to be displayed on the y axis"
-	print "-o\tthe image file to write the output to. Use '-' for stdout"
+	print "-o\tthe image file to write the output to."
 	print "-s\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger."
 	print "-k\tktuple size for tokenisation"
 	print "-w\twindow size for comparing mismatches"
 	print "-m\tminimum match length to be included"
 	print "-d\tnumber of mismatches allowed per window of sequence"
+	print "-S\tsave the computed dotplot as the specified file"
+	print "-L\tload the precomputed dotplot from the specified file"
+	print "-M\toverride the automatic major tick seperation with this value"
+	print "-T\toverride the automatic minor tick seperation with this value"
 	print
 	print "Examples:"
 	print " %s -x seq1.fasta -x seq2.fasta -x seq3.fasta -y seq4.fasta -y seq5.fasta -o graph.png -s 1024"%sys.argv[0]
@@ -46,10 +50,12 @@ def parseopts():
 	mismatch=0
 	savefile=None
 	loadfile=None
+	major=None
+	minor=None
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load="]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor="]
 	
 	try:
 		opts,args=getopt.getopt(sys.argv[1:],shortopts,longopts)
@@ -93,7 +99,12 @@ def parseopts():
 			
 		elif o in ("-L","--load"):
 			loadfile=str(a)	
-		
+			
+		elif o in ("-M","--major"):
+			major=int(a)
+			
+		elif o in ("-T","--minor"):
+			minor=int(a)
 			
 		elif o in ("-s","--size"):
 			# try and parse the size string
@@ -104,10 +115,10 @@ def parseopts():
 				usage()
 				sys.exit(3)
 				
-	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile
+	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor
 	
 def main():
-	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile=parseopts()
+	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor=parseopts()
 	
 	if DEBUG:
 		print "xsequences:",xseqfiles
@@ -120,6 +131,8 @@ def main():
 		print "mismatch",mismatch
 		print "loadfile",loadfile
 		print "savefile",savefile
+		print "major",major
+		print "minor",minor
 	
 	from DotPlot import DotPlot
 	
@@ -127,10 +140,10 @@ def main():
 	
 	if loadfile!=None:
 		#load the dotstore from a previous run
-		print "Loading dotplot"
+		print "Loading dotplot",loadfile,"..."
 		t=time()
 		plot.Load(loadfile)
-		print time()-t,"seconds"
+		print "done in",time()-t,"seconds"
 	else:
 		#calculate it
 		print "create tables"
@@ -150,10 +163,7 @@ def main():
 		plot.Save(savefile)
 		
 	
-	
-	
 	xsize,ysize=plot.GetSequenceLength(0),plot.GetSequenceLength(1)
-	print "Size = %d x %d"%(xsize,ysize)
 	
 	# work out scale and thus final image width and height
 	longest=(xsize>ysize) and xsize or ysize
@@ -165,17 +175,6 @@ def main():
 	
 	xoutput=float(xsize)/scale
 	youtput=float(ysize)/scale
-	
-	print "output = %d x %d"%(xoutput,youtput)
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	print "indexing"
 	t=time()
@@ -189,7 +188,7 @@ def main():
 	
 	print "making image"
 	t=time()
-	image=plot.MakeImage()
+	image=plot.MakeImage(major=major,minor=minor)
 	print time()-t,"seconds"
 	
 	image.save(outfile)

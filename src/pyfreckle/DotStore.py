@@ -56,6 +56,9 @@ class DotStore:
 	
 	def FreeBuffer(self, buffer):
 		self.lib.FreeIntBuffer(buffer)
+		
+	def Filter(self, minmatch):
+		return DotStore(self.lib.DotStoreFilter(self.dotstore, minmatch))
 	
 	def ToString(self):
 		import struct
@@ -95,12 +98,12 @@ class DotStore:
 		data=stream.read(struct.calcsize("3i"))
 		maxx,maxy,length=struct.unpack("3i",data)
 		
-		print maxx,maxy,length,struct.calcsize("%di"%length)
+		#print maxx,maxy,length,struct.calcsize("%di"%length)
 		
 		# read length more
 		data+=stream.read(struct.calcsize("%di"%length*3))
 		
-		print "read",len(data)
+		#print "read",len(data)
 		
 		#array=c_int*(length+3)
 		#print array
@@ -108,7 +111,7 @@ class DotStore:
 		# turn into a shitload of ints. We don't need to free this because it was created in python
 		array=apply( c_int*(length*3+3), struct.unpack("%di"%(length*3+3),data) )
 		
-		print "applied",len(array)
+		#print "applied",len(array)
 		
 		self.FromBuffer(array)
 	
