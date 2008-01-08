@@ -2,6 +2,7 @@
 #include "LinkedListVal.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 QuadTree::QuadTree(Type x1, Type y1, Type x2, Type y2)
 {
@@ -54,11 +55,12 @@ LinkedListVal<Dot *> *QuadTree::SpatialQuery(Type xp1, Type yp1, Type xp2, Type 
 {
 	assert(xp1<=xp2);
 	assert(yp1<=yp2);
-
-	LinkedListVal<Dot *> *list=new LinkedListVal<Dot *>;
 	
+	LinkedListVal<Dot *> *list=new LinkedListVal<Dot *>;
+
 	// walk the tree looking for whats potentially included and whats not
-	root->SpatialQueryRecurse(list,xp1,yp1,xp2,yp2);
+	if(root)							// if root is NULL, then our index is empty		
+		root->SpatialQueryRecurse(list,xp1,yp1,xp2,yp2);
 
 	return list;
 }

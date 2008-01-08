@@ -118,6 +118,17 @@ class DotPlot:
 		self.ProcStart = lambda st: ((st==None) and [0] or [st])[0]
 		self.ProcEnd = lambda dim,en: ((en==None) and [self.GetSequenceLength(dim)] or [en])[0]
 		
+	def Filter(self, length):
+		"""
+		\brief filter all the stored dotstores to only include matches of at least length
+		\param length The minimum allowable match length
+		"""
+		newds={}
+		for key in self.dotstore.keys():
+			newds[key]=(self.dotstore[key][0].Filter(length),self.dotstore[key][1].Filter(length))
+			
+		self.dotstore=newds
+		
 		
 	def GetSequenceLength(self,dimension):
 		"""
@@ -337,7 +348,7 @@ class DotPlot:
 				
 		# forward and reverse grid
 		grid=[DotGrid(),DotGrid()]
-			
+		
 		[g.Calculate(dots,x1,y1,x2,y2,scale,self.window) for g,dots in zip(grid,self.dotstore[storekey])]
 		grid[1].FlipInplace()
 		grid[0].AddInplace(grid[1])

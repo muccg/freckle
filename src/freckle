@@ -19,22 +19,38 @@ def usage():
 	"""print the usage of the programme"""
 	print "Usage:"
 	print " %s [-h] -x xseq1 [-x xseq2 -x xseq3 ...] -y yseq1 [-y yseq2 -y yseq3 ...] -o outputfile [-s imagesize]"%sys.argv[0]
-	print "-h\tthis helpful blurb"
-	print "-x\ta FASTA file for a sequence to be displayed on the x axis"
-	print "-y\ta FASTA file for a sequence to be displayed on the y axis"
-	print "-o\tthe image file to write the output to."
-	print "-s\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger."
-	print "-k\tktuple size for tokenisation"
-	print "-w\twindow size for comparing mismatches"
-	print "-m\tminimum match length to be included"
-	print "-d\tnumber of mismatches allowed per window of sequence"
-	print "-S\tsave the computed dotplot as the specified file"
-	print "-L\tload the precomputed dotplot from the specified file"
-	print "-M\toverride the automatic major tick seperation with this value"
-	print "-T\toverride the automatic minor tick seperation with this value"
+	print "-h\t--help\t\tthis helpful blurb"
+	print "-x\t--xfile=\ta FASTA file for a sequence to be displayed on the x axis"
+	print "-y\t--yfile=\ta FASTA file for a sequence to be displayed on the y axis"
+	print "-o\t--output=\tthe image file to write the output to."
+	print "-s\t--size=\t\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger."
+	print "-k\t--ktup=\t\tktuple size for tokenisation"
+	print "-w\t--window=\twindow size for comparing mismatches"
+	print "-m\t--minmatch=\tminimum match length to be included"
+	print "-d\t--mismatch=\tnumber of mismatches allowed per window of sequence"
+	print "-S\t--save=\t\tsave the computed dotplot as the specified file"
+	print "-L\t--load=\t\tload the precomputed dotplot from the specified file"
+	print "-M\t--major=\toverride the automatic major tick seperation with this value"
+	print "-T\t--minor=\toverride the automatic minor tick seperation with this value"
+	print "-F\t--filter=\tfilter the dotplot to only include matches at least this long"
 	print
 	print "Examples:"
+	print
+	print "calculate a dotplot for seq 1,2 and 3 vs seq 4 and 5. Output this to graph.png."
 	print " %s -x seq1.fasta -x seq2.fasta -x seq3.fasta -y seq4.fasta -y seq5.fasta -o graph.png -s 1024"%sys.argv[0]
+	print
+	print "calculate a dotplot for a sequence versus itself. Save the outcome in a dotplot file for later rendering."
+	print " %s -x sequence.fasta -y sequence.fasta -S sequence.dotplot"%sys.argv[0]
+	print
+	print "load a previously calculated dotplot and generate a large graph called image.jpg. Make the major ticks 10000 units apart."
+	print " %s -L sequence.dotplot -s 4096 -o image.jpg -M 10000"%sys.argv[0]
+	print
+	print "load a previous dotplot and filter out all the matches less than 20 in length. Save the new dotplot."
+	print " %s -L sequence.dotplot -F 20 -S sequence_majors.dotplot"%sys.argv[0]
+	print
+	print "load a previous dotplot and filter out all the matches less than 30 in length. Draw the resulting image as a graph. Save the output aswell"
+	print " %s -L sequence.dotplot -F 30 -s 2048 -o image.png -S sequence_over30.dotplot"%sys.argv[0]
+	
 	
 def parseopts():
 	"""parse the command line options and return them"""
@@ -42,7 +58,7 @@ def parseopts():
 	# default parameters
 	xseq=[]
 	yseq=[]
-	outfile="output.png"
+	outfile=None
 	imagesize=512
 	ktup=8
 	window=8
@@ -52,10 +68,11 @@ def parseopts():
 	loadfile=None
 	major=None
 	minor=None
+	filt=None
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor="]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter="]
 	
 	if len(sys.argv[1:])==0:
 		usage()
@@ -110,6 +127,9 @@ def parseopts():
 		elif o in ("-T","--minor"):
 			minor=int(a)
 			
+		elif o in ("-F","--filter"):
+			filt=int(a)
+			
 		elif o in ("-s","--size"):
 			# try and parse the size string
 			try:
@@ -119,10 +139,10 @@ def parseopts():
 				usage()
 				sys.exit(3)
 				
-	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor
+	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt
 	
 def main():
-	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor=parseopts()
+	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt=parseopts()
 	
 	if DEBUG:
 		print "xsequences:",xseqfiles
@@ -137,6 +157,7 @@ def main():
 		print "savefile",savefile
 		print "major",major
 		print "minor",minor
+		print "filter",filt
 	
 	from DotPlot import DotPlot
 	
@@ -160,8 +181,14 @@ def main():
 		plot.CalculateDotStore()
 		print "done in",time()-t,"seconds"
 	
+	#do we filter this?
+	if filt!=None:
+		print "Filtering dotplot..."
+		t=time()
+		plot.Filter(filt)
+		print "done in",time()-t,"seconds"
 	
-	if loadfile==None and savefile!=None:
+	if savefile!=None:
 		#save the dotstore
 		print "Saving dotplot..."
 		t=time()
@@ -182,23 +209,25 @@ def main():
 	xoutput=float(xsize)/scale
 	youtput=float(ysize)/scale
 	
-	print "Indexing dotplot..."
-	t=time()
-	plot.IndexDotStores()
-	print "done in",time()-t,"seconds"
-	
-	print "Calculating averaged grid..."
-	t=time()
-	plot.MakeAverageGrid(scale)
-	print "done in",time()-t,"seconds"
-	
-	print "Rendering image..."
-	t=time()
-	image=plot.MakeImage(major=major,minor=minor)
-	print "done in",time()-t,"seconds"
-	
-	image.save(outfile)
-	
+	if outfile!=None:
+		
+		print "Indexing dotplot..."
+		t=time()
+		plot.IndexDotStores()
+		print "done in",time()-t,"seconds"
+		
+		print "Calculating averaged grid..."
+		t=time()
+		plot.MakeAverageGrid(scale)
+		print "done in",time()-t,"seconds"
+		
+		print "Rendering image..."
+		t=time()
+		image=plot.MakeImage(major=major,minor=minor)
+		print "done in",time()-t,"seconds"
+		
+		image.save(outfile)
+		
 	sys.exit(0)
 	
 	

@@ -398,6 +398,8 @@ int DotStore::BufferSize(int *buffer)
 DotStore *DotStore::Filter(int minlength)
 {
 	DotStore *filteredstore=new DotStore();
+	filteredstore->maxx=maxx;
+	filteredstore->maxy=maxy;
 
 	// loop through every dot and if they are less that the minlength then ignore them, else add them to the new dotstore
 	Dot *dot=NULL;
