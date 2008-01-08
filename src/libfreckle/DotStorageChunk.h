@@ -3,18 +3,16 @@
 
 #include <malloc.h>			//give us NULL
 #include <assert.h>
+#include <stdio.h>
 #include "Dot.h"
 
-#define DOTSTORAGECHUNKSIZE	512
+#define DOTSTORAGECHUNKSIZE	8192
 
 class DotStorageChunk
 {
 private:
 	Dot	dots[DOTSTORAGECHUNKSIZE];
 	
-	// this is not the most efficient way RAM wise but it will do for now
-	bool	inuse[DOTSTORAGECHUNKSIZE];
-
 	int	num;
 
 	// doubly linked list of storage chunks
@@ -66,7 +64,7 @@ public:
 		return prev;
 	}
 
-	inline bool	IsFull()
+	bool	IsFull()
 	{
 		return num==DOTSTORAGECHUNKSIZE;
 	}

@@ -378,6 +378,8 @@ int *DotStoreToBuffer(DotStore *store) { return store->ToBuffer(); }
 void DotStoreFromBuffer(DotStore *store, int *buffer) { store->FromBuffer(buffer); }
 int DotStoreBufferSize(DotStore *store, int *buffer) { return store->BufferSize(buffer); }
 void FreeIntBuffer(int *buffer) { assert(buffer); delete buffer; }
+DotStore *DotStoreFilter(DotStore *store, int minlen) { return store->Filter(minlen); } 
+
 /*
 ** helper function to interface with the dotgrid
 */

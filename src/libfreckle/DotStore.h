@@ -42,7 +42,7 @@ public:
 	int BufferSize(int *buffer);
 
 	//! \brief filter out any dots that are less than a particular length
-	int Filter(int minlength);
+	DotStore *Filter(int minlength);
 
 	inline int GetDotX(int index)
 	{

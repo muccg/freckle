@@ -395,35 +395,19 @@ int DotStore::BufferSize(int *buffer)
 	return buffer[2]*3+3;
 }
 
-int DotStore::Filter(int minlength)
+DotStore *DotStore::Filter(int minlength)
 {
-	// loop through every dot and if they are less that the minlength then delete them
-	int num=0;
-	int deleted=0;
+	DotStore *filteredstore=new DotStore();
+
+	// loop through every dot and if they are less that the minlength then ignore them, else add them to the new dotstore
 	Dot *dot=NULL;
-	while(num<GetNum())
+	for(int i=0; i<GetNum(); i++)
 	{
-		dot=GetDot(num);
-		if(dot->length < minlength)
-		{
-			// if we are indexed remove this from the index
-			if(index)
-				index->DelDot(dot);
-
-			// delete this one
-			DelDot(num);
-			deleted++;
-	
-			// because the array "moves" down in terms of index number, we don't need to increase num here
-		}
-		else
-		{
-			// that one was fine. move onwards
-			num++;
-		}
-
+		dot=GetDot(i);
+		if(dot->length >= minlength)
+			filteredstore->AddDot(dot->x, dot->y, dot->length);
 	}
 
-	return deleted;							// return a count of how many dots were deleted.
+	return filteredstore;
 }
 

@@ -212,6 +212,7 @@ public:
 		#define NUMTESTDOTS 1000
 		Dot dot[NUMTESTDOTS];
 		DotStore *ds=new DotStore();
+		DotStore *oldds=NULL;
 
 		#define MAXLEN 100
 		int counts[MAXLEN];
@@ -235,7 +236,9 @@ public:
 		TS_ASSERT(ds->GetNum() == shouldbe);
 		for(int j=0; j<MAXLEN; j++)
 		{
-			ds->Filter(j+1);			// clear out ever dot length less than OR EQUAL TO j	
+			oldds=ds;
+			ds=ds->Filter(j+1);			// clear out ever dot length less than OR EQUAL TO j	
+			delete oldds;
 			shouldbe-=counts[j];			// we should loose this many
 			TS_ASSERT(ds->GetNum() == shouldbe);	// make sure thats true
 		}

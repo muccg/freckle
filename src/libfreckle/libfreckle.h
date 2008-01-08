@@ -56,6 +56,7 @@ int *DotStoreToBuffer(DotStore *store);
 void DotStoreFromBuffer(DotStore *store, int *buffer);
 int DotStoreBufferSize(DotStore *store, int *buffer);
 void FreeIntBuffer(int *buffer);
+DotStore *DotStoreFilter(DotStore *store, int minlen);
 
 // DotGrid helper functions and wrappers
 DotGrid *NewDotGrid();

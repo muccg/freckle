@@ -10,8 +10,6 @@ DotStorageChunk::DotStorageChunk()
 	next=NULL;
 	prev=NULL;
 
-	for(int i=0; i<DOTSTORAGECHUNKSIZE; i++)
-		inuse[i]=false;
 }
 
 DotStorageChunk::~DotStorageChunk()
@@ -21,62 +19,31 @@ DotStorageChunk::~DotStorageChunk()
 
 Dot *DotStorageChunk::GetDot(int index)
 {
-	assert(index>=0);
-	assert(index<DOTSTORAGECHUNKSIZE);
-
-	// this array may be spacious, so we have to count in past unused spots to find the indexed dot
-	int n=0;
-	int ind=0;
-	while(ind<=index and n-1<DOTSTORAGECHUNKSIZE)
-	{
-		if(inuse[n])
-		{
-			ind++;
-		}
-		n++;
-	}
-
-	if(n-1 == DOTSTORAGECHUNKSIZE)
-		return NULL;
-
-	return &dots[n-1];
+        assert(index>=0);
+        assert(index<DOTSTORAGECHUNKSIZE);
+        return &dots[index];
 }
 
 void DotStorageChunk::AddDot(int x, int y, int length)
 {
-	assert(num<DOTSTORAGECHUNKSIZE);		// make sure we are not full
-
-	// find first available and stick it there
-	int n=0;
-	while(inuse[n])
-		n++;
-	dots[n].x=x;
-	dots[n].y=y;
-	dots[n].length=length;
-	inuse[n]=true;					// mark as used
-	num++;
+        assert(num<DOTSTORAGECHUNKSIZE);                // make sure we are not full
+        dots[num].x=x;
+        dots[num].y=y;
+        dots[num].length=length;
+        num++;
 }
 
 void DotStorageChunk::DelDot(int index)
 {
-	assert(index<num);
-
-	// find this index to delete
-	int n=0;
-	int ind=0;
-	while(ind<=index)
-	{
-		if(inuse[n])
-		{
-			ind++;
-		}
-		n++;
-	}
-
-	assert(n-1 < DOTSTORAGECHUNKSIZE);
-	inuse[n-1]=false;				// mark as unused
-	
-	num--;	
+        assert(index<num);
+        // move them all down one
+        for(int i=index; i<num; i++)
+        {
+                dots[i].x=dots[i+1].x;
+                dots[i].y=dots[i+1].y;
+                dots[i].length=dots[i+1].length;
+        }
+        num--;
 }
 
 // link 'insert' in before this in any linked chain
