@@ -57,6 +57,10 @@ def parseopts():
 	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:"
 	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor="]
 	
+	if len(sys.argv[1:])==0:
+		usage()
+		sys.exit(0)
+	
 	try:
 		opts,args=getopt.getopt(sys.argv[1:],shortopts,longopts)
 	except getopt.GetoptError:
