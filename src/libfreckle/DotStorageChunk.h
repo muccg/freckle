@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "Dot.h"
 
-#define DOTSTORAGECHUNKSIZE	8192
+#define DOTSTORAGECHUNKSIZE	512
 
 class DotStorageChunk
 {

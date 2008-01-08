@@ -2,6 +2,8 @@
 
 #include "DotStore.h"
 
+#include <stdlib.h>
+
 class MyTestSuite : public CxxTest::TestSuite
 {
 public:
@@ -202,6 +204,43 @@ public:
 
 		delete ds2;
 		delete buffer;
+	}
+
+	#define RANDINT(max) (rand()%max)
+	void testFilter(void)
+	{
+		#define NUMTESTDOTS 1000
+		Dot dot[NUMTESTDOTS];
+		DotStore *ds=new DotStore();
+
+		#define MAXLEN 100
+		int counts[MAXLEN];
+		memset(counts, 0, MAXLEN*sizeof(int));
+
+		for(int i=0; i<NUMTESTDOTS; i++)
+		{
+			dot[i].x=RANDINT(1000);
+			dot[i].y=RANDINT(1000);
+			dot[i].length=RANDINT(MAXLEN);
+			if(dot[i].length==0)
+				dot[i].length=1;
+
+			counts[dot[i].length]++;		// keep a histogram for later look up
+
+			ds->AddDot(dot[i].x, dot[i].y, dot[i].length);
+		}
+
+		int shouldbe=NUMTESTDOTS;
+		
+		TS_ASSERT(ds->GetNum() == shouldbe);
+		for(int j=0; j<MAXLEN; j++)
+		{
+			ds->Filter(j+1);			// clear out ever dot length less than OR EQUAL TO j	
+			shouldbe-=counts[j];			// we should loose this many
+			TS_ASSERT(ds->GetNum() == shouldbe);	// make sure thats true
+		}
+		
+		delete ds;
 	}
 };
 
