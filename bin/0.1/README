@@ -1,0 +1,2 @@
+This file is a single executable of the freckle command line. It contains all the libraries and support files needed to run freckle. Including libfreckle.so. It is compiled for a 64bit opteron CPU and may segfault on different hardware.
+
