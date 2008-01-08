@@ -146,21 +146,23 @@ def main():
 		print "done in",time()-t,"seconds"
 	else:
 		#calculate it
-		print "create tables"
+		print "Precalculating tables..."
 		t=time()
 		plot.CreateTables()
-		print time()-t,"seconds"
+		print "done in",time()-t,"seconds"
 	
-		print "calculating dotplot"
+		print "Calculating dotplot..."
 		t=time()
 		plot.CalculateDotStore()
-		print time()-t,"seconds"
+		print "done in",time()-t,"seconds"
 	
 	
 	if loadfile==None and savefile!=None:
 		#save the dotstore
-		print "Saving dotplot"
+		print "Saving dotplot..."
+		t=time()
 		plot.Save(savefile)
+		print "done in",time()-t,"seconds"
 		
 	
 	xsize,ysize=plot.GetSequenceLength(0),plot.GetSequenceLength(1)
@@ -176,20 +178,20 @@ def main():
 	xoutput=float(xsize)/scale
 	youtput=float(ysize)/scale
 	
-	print "indexing"
+	print "Indexing dotplot..."
 	t=time()
 	plot.IndexDotStores()
-	print time()-t,"seconds"
+	print "done in",time()-t,"seconds"
 	
-	print "averaging"
+	print "Calculating averaged grid..."
 	t=time()
 	plot.MakeAverageGrid(scale)
-	print time()-t,"seconds"
+	print "done in",time()-t,"seconds"
 	
-	print "making image"
+	print "Rendering image..."
 	t=time()
 	image=plot.MakeImage(major=major,minor=minor)
-	print time()-t,"seconds"
+	print "done in",time()-t,"seconds"
 	
 	image.save(outfile)
 	
