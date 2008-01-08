@@ -2,8 +2,8 @@ CPP=g++
 CC=gcc
 # CPPFLAGS=-fPIC -Wall -g -pg
 # LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
-CPPFLAGS=-fPIC -Wall
-LDFLAGS=-shared -Wl,-soname,test.so -lc 
+CPPFLAGS=-fPIC -Wall -march=opteron
+LDFLAGS=-shared -Wl,-soname,test.so -lc -march=opteron
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 

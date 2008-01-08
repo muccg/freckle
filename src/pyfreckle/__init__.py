@@ -7,10 +7,16 @@ pyfreckle is the python bindings of libfreckle, to aid in the computation and co
 """
 
 from ctypes import *
-import os.path
+import os
 
 # dynamically locate our .so file in the same directory as this module
-__library_c_source__=os.path.join(os.path.dirname(__file__),"libfreckle.so")
+try:
+	import sys
+	if sys.frozen:
+		# we are frozen in a package. Grab it from our unpacked directory
+		__library_c_source__=os.path.join(os.environ['LD_LIBRARY_PATH'].split(':')[0],"libfreckle.so")
+except AttributeError, e:
+	__library_c_source__=os.path.join(os.path.dirname(__file__),"libfreckle.so")
 lib=cdll.LoadLibrary(__library_c_source__)
 
 # import the modules into this namespace
