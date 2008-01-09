@@ -414,6 +414,7 @@ int *DotGridCalculateHistogram(DotGrid *grid) {return grid->CalculateHistogram()
 
 void DumpDotStore(DotStore *store) { store->Dump(); }
 
+#ifdef DEBUG
 /*
 ** getInfo
 ** =======
@@ -490,7 +491,7 @@ void getInfo()
 // 	printf("%d matches\n",makeDotComparison(s1,s2,2,3,0,1)->GetNum());
 	
 }
-
+#endif
 
 
 

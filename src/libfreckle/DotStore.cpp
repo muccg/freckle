@@ -190,14 +190,14 @@ void DotStore::DestroyIndex()
 	index=NULL;
 }
 
-
+#ifdef DEBUG
 //Dump the index to stdout. Mainly for DEBUG
 void DotStore::DumpIndex()
 {
 	assert(index);
 	index->Dump();
 }
-
+#endif
 
 // use the index to quickly find a dot
 Dot *DotStore::GetIndexDot(int x,int y)

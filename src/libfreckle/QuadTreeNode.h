@@ -20,6 +20,7 @@ typedef int Type;
 
 #define NUMDOTS 4
 
+
 class QuadTreeNode
 {
 private:
@@ -137,7 +138,7 @@ public:
 		y=yp;
 	}
 	
-#if 0
+#ifdef DEBUG
 	inline void Dump()
 	{
 		printf("QuadTreeNode(%d)\n============================\n",(__U32_TYPE)this);

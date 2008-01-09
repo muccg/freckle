@@ -187,7 +187,6 @@ void QuadTreeNode::DeleteDot(Dot *dot)
 		
 		// if we get to here then the Dot was not found in the tree, or the dot has moved since it was added
 		// this is very bad and we should die
-		Dump();
 		assert(0);
 	}
 	else if(isNode())

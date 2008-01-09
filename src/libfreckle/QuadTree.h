@@ -25,6 +25,7 @@ public:
 
 	LinkedListVal<Dot *> *SpatialQuery(Type x1, Type y1, Type x2, Type y2);
 
+#ifdef DEBUG
 	// dump the tree to stdout
 	inline void Dump()
 	{
@@ -36,6 +37,7 @@ public:
 		if(root)
 			root->Dump();
 	}
+#endif
 
 };
 
