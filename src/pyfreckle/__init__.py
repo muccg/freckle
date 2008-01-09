@@ -27,7 +27,7 @@ except AttributeError, e:
 		__library_c_source__=os.path.join(PATH.pop(),"libfreckle.so")
 		try:
 			lib=cdll.LoadLibrary(__library_c_source__)
-		except AttributeError, e:
+		except OSError, e:
 			pass
 		
 

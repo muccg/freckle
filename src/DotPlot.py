@@ -164,7 +164,9 @@ class DotPlot:
 		start=self.ProcStart(start)
 		end=self.ProcEnd(dimension,end)
 		
-		subseq=self.GetSubSequence(dimension,start,end).data
+		# munge anything thats not 'ACGT' into a '.'
+		subseq=''.join([(a in 'ACGT') and a or '.'  for a in self.GetSubSequence(dimension,start,end).data])
+		
 		table=(start,end,subseq,buildMappingTables(subseq, self.ktup))
 		self.tables[dimension][(start,end)]=table
 		
@@ -197,14 +199,13 @@ class DotPlot:
 		assert(tables)		# other dimension should be indexed
 		
 		# assemble our comparison sequence
-		compseq=self.GetSubSequence(dimension, start, end).data
+		compseq=''.join([(a in 'ACGT') and a or '.'  for a in self.GetSubSequence(dimension,start,end).data])
 		
 		# make a dotstore for this region
 		dotstore=doComparison(tables[3], tables[2], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
 		
 		# and a reverse dotstore
 		revdotstore=doComparison(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
-		
 		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
 		
 		return (dotstore, revdotstore)

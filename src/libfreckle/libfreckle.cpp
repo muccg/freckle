@@ -89,13 +89,13 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 	int seqlen=strlen(sequence);
 	assert(seqlen>0);
 
-	int ktuplearraysize=ipow(BASE_PAIRS(bases),ktuplesize);
+	int ktuplearraysize=ipow(BASE_MASK(bases)+1,ktuplesize);
 	int darraysize=seqlen-ktuplesize+1;
 	
 	// we allocate our arrays
 	int *C=new int [ktuplearraysize];
 	int *D=new int [darraysize];
-
+	
 	// lets zero our arrays
 	memset(C, 0, sizeof(int)*ktuplearraysize);
 	memset(D, 0, sizeof(int)*darraysize);
@@ -186,14 +186,23 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 	
 	memset(ringbuf,0,sizeof(ringbuf));
 
-	int matchlength=k;
+	int matchlength=0;
 
-	const char *s1=seq1+p1+k;
-	const char *s2=seq2+p2+k;
+	const char *s1=seq1+p1;
+	const char *s2=seq2+p2;
 	
 	while((sum(ringbuf,window)<=mismatch) && *s1 && *s2 )
-		ringbuf[matchlength++%window] = *s1++==*s2++?0:1;		//compare s1 and s2 characters. assign 1 to the relevant 
-		
+	{
+		if(*s1=='.' || *s2=='.')						// unknowns are always a mismatch
+		{
+			ringbuf[matchlength++%window] = 1;
+			s1++;
+			s2++;
+		}
+		else 
+			ringbuf[matchlength++%window] = *s1++==*s2++?0:1;		//compare s1 and s2 characters. assign 1 to the relevant 
+	}	
+	
 	return matchlength-((sum(ringbuf,window)<=mismatch)?0:1);
 		
 }

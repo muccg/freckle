@@ -17,18 +17,18 @@ typedef unsigned long long int u64;
 /* this gives us a maximum ktuple size of 16 for 4 base pairs. But will work well on 32 bit systems */
 typedef u32 TupleID;
 
-const char *Bases="ACGT";
-const char *Aminos="ACDEFGHIKLMNPQRSTVWY-";					// - = stop codon
+const char *Bases="ACGT.";							// . means UNKNOWN
+const char *Aminos="ACDEFGHIKLMNPQRSTVWY-.";					// - = stop codon    . means UNKNOWN
 const char TranslateUniversal[]="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV-Y-YSSSS-CWCLFLF";
 
 // this is a bit mask for the tuple id
-#define BASE_MASK(basestring)	(basestring==Bases?3:(basestring==Aminos?31:0))
+#define BASE_MASK(basestring)	(basestring==Bases?7:(basestring==Aminos?31:0))
 
 // how many basepairs we have
 #define BASE_PAIRS(basestring)	(strlen(basestring))
 
 // this is how far to shift the bits to squeeze another in
-#define BASE_BIT_SHIFT(basestring)	(basestring==Bases?2:(basestring==Aminos?5:0))		
+#define BASE_BIT_SHIFT(basestring)	(basestring==Bases?3:(basestring==Aminos?5:0))		
 
 
 
