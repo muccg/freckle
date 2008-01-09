@@ -5,6 +5,7 @@
 #include "LinkedListVal.h"
 #include <assert.h>
 #include <stdio.h>
+#include <types.h>
 
 // the type of units for the points
 typedef int Type;
@@ -138,13 +139,13 @@ public:
 	
 	inline void Dump()
 	{
-		printf("QuadTreeNode(%d)\n============================\n",(int)this);
+		printf("QuadTreeNode(%d)\n============================\n",(__U32_TYPE)this);
 		printf("type:%s\n",type==QTNODE?"QTNODE":"QTLEAF");
 		printf("x1:%d\ty1:%d\tx2:%d\ty2:%d\n",x1,y1,x2,y2);
 		if(type==QTNODE)
 		{
 			printf("x:%d\ty:%d\n",x,y);
-			printf("children: %d %d %d %d\n\n",(int)store.child[0],(int)store.child[1],(int)store.child[2],(int)store.child[3]);
+			printf("children: %d %d %d %d\n\n",(__U32_TYPE)store.child[0],(__U32_TYPE)store.child[1],(__U32_TYPE)store.child[2],(__U32_TYPE)store.child[3]);
 			for(int i=0; i<4; i++)
 				if(store.child[i])
 					store.child[i]->Dump();
