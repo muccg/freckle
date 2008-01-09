@@ -7,7 +7,17 @@ LDFLAGS=-shared -Wl,-soname,test.so -lc -march=opteron
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 
+INSTALLVERSION=0.1
+TARGET=/usr/local/lib
+HEADERTARGET=/usr/local/include
+
 all: libfreckle.so
+
+install: libfreckle.so
+	-cp libfreckle.so $(TARGET)/libfreckle.so.$(INSTALLVERSION)
+	-ln -s $(TARGET)/libfreckle.so.$(INSTALLVERSION) $(TARGET)/libfreckle.so
+	-cp libfreckle.h $(HEADERTARGET)/
+	-ldconfig
 
 tests: runtests
 

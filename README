@@ -6,6 +6,38 @@ About
 -----
 Yuang and Zhang, 2004 algorithm
 
-TODO
-----
-Finish the basic workings
+Installation
+------------
+
+1. The hard and more correct way
+
+First install libfreckle on the system. Change into the src/libfreckle directory. Check the header of Makefile to ensure all the options are correct. The setup is by default for an opteron CPU so check that -mcpu matches your system. Run make, make tests and then make install.
+	
+	$ cd src/libfreckle
+	$ make clean
+	$ make tests
+	$ make
+	$ sudo make install
+
+Next install the relevant python and python packages on your system. You will need at least python 2.4. If you use 2.5 you will not need to add the ctypes package as this is built in. On debian (etch) these are the packages you will need.
+
+	$ sudo apt-get install python python-bio python-ctypes python-imaging python-numpy
+
+Finally install the pyfreckle python module and freckle command line. Move back into the src directory and issue
+
+	$ python setup.py build
+	$ sudo python setup.py install
+
+Check the programme runs ok
+
+	$ freckle -h
+
+
+
+
+2. The speedy way.
+
+The directory bin contains built single file binaries. These contain all the dependencies, including the libfreckle.so built in. They are built for a specific system which you can read about in the associated README. All you need to do is copy this file to an executable
+
+	$ sudo cp bin/0.1/freckle /usr/local/bin
+

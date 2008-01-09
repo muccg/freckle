@@ -15,9 +15,21 @@ try:
 	if sys.frozen:
 		# we are frozen in a package. Grab it from our unpacked directory
 		__library_c_source__=os.path.join(os.environ['LD_LIBRARY_PATH'].split(':')[0],"libfreckle.so")
+		lib=cdll.LoadLibrary(__library_c_source__)
 except AttributeError, e:
-	__library_c_source__=os.path.join(os.path.dirname(__file__),"libfreckle.so")
-lib=cdll.LoadLibrary(__library_c_source__)
+	OPATHS=['/usr/local/lib','/usr/lib','/lib',os.path.dirname(__file__)]
+	PATH=OPATHS[::-1]
+	lib=None
+	while lib==None:
+		if len(PATH)==0:
+			#no library could be found
+			raise Exception, "libfreckle.so could not be found. tried " + ','.join(OPATHS)
+		__library_c_source__=os.path.join(PATH.pop(),"libfreckle.so")
+		try:
+			lib=cdll.LoadLibrary(__library_c_source__)
+		except AttributeError, e:
+			pass
+		
 
 # import the modules into this namespace
 from DotGrid import DotGrid
