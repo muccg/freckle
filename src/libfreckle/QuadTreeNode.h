@@ -137,6 +137,7 @@ public:
 		y=yp;
 	}
 	
+#if 0
 	inline void Dump()
 	{
 		printf("QuadTreeNode(%d)\n============================\n",(__U32_TYPE)this);
@@ -159,6 +160,7 @@ public:
 			printf("\n");
 		}
 	}
+#endif
 
 	void SpatialQueryRecurse(LinkedListVal<Dot *> *list, Type xp1, Type yp1, Type xp2, Type yp2);
 
