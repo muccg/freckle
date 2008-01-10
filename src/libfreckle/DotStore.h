@@ -43,6 +43,9 @@ public:
 
 	//! \brief filter out any dots that are less than a particular length
 	DotStore *Filter(int minlength);
+	
+	//! \brief interpolate long matches into many small matches
+	void Interpolate(int window);
 
 	inline int GetDotX(int index)
 	{

@@ -413,3 +413,41 @@ DotStore *DotStore::Filter(int minlength)
 	return filteredstore;
 }
 
+// Any matches that are greater than length window are processed
+// added to the dot store are a bunch of sub matches to step across the window
+void DotStore::Interpolate(int window)
+{
+	DotStore *extradots=new DotStore();
+
+	Dot *dot=NULL;
+
+	for(int i=0; i<GetNum(); i++)
+	{
+		dot=GetDot(i);
+
+		if(dot->length > window)
+		{
+			// break it down, now!
+			int remainder=dot->length-window;
+			int xpos=dot->x+window;
+			int ypos=dot->y+window;
+
+			while(remainder>0)
+			{
+				extradots->AddDot(xpos,ypos,remainder);
+				xpos+=window;
+				ypos+=window;
+				remainder-=window;
+			}
+		}
+	}
+
+	// now add all these extra dots into our store
+	for(int i=0; i<extradots->GetNum(); i++)
+	{
+		dot=extradots->GetDot(i);
+		AddDot(dot->x,dot->y,dot->length);
+	}
+
+	delete extradots;
+}

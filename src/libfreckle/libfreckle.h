@@ -46,8 +46,15 @@ DotStore *doComparison(unsigned int **tables, const char *tablesequence, const c
 DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch);
 
 // lbdot comparison
-// int DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,char *Name1, char *Name2, 
-// 						   int CompWind,int CompMism, int nMaxRepeatKtup,ArrayDotPoint	*PlusDotArray,ArrayDotPoint	*MinusDotArray);
+char *strrev( char *str);
+void Init_code_tables();
+void EncodeNTSeq(const char *seq, int p1, int p2, int *c,int *d, int nm, int nMaxDNAKtup);
+int EncodeNTSeqConditional(const char *seq, int p1, int p2, int *c,int *d,int *cd, int nm, int maxHints, int nMaxDNAKtup);
+int GetNtCode(const char *seq, int ktup, int intval, const int *v);
+void ComplementSeq(char  *a);
+char *RCseq(char *a);
+DotStore *DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,
+						   int CompWind,int CompMism, int nMaxRepeatKtup, int nMaxDNAKtup);
 
 // helper functions
 DotStore *NewDotStore();

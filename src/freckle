@@ -23,7 +23,11 @@ defminmatch=12
 defmismatch=0
 
 # version
-versionstring="0.2"
+versionstring="0.3"
+
+# algorithm defines
+LBDOT=0				#the default
+ZANGYUANG=1
 
 def usage():
 	"""print the usage of the programme"""
@@ -43,6 +47,7 @@ def usage():
 	print "-M\t--major=\toverride the automatic major tick seperation with this value"
 	print "-T\t--minor=\toverride the automatic minor tick seperation with this value"
 	print "-F\t--filter=\tfilter the dotplot to only include matches at least this long"
+	print "-f\t--fine=\tuse the slower finer algorithm to generate the dotplot. Works with lower ktuple and match sizes but takes significantly longer."
 	print "-v\t--version\tdisplay version information"
 	print
 	print "Examples:"
@@ -84,10 +89,11 @@ def parseopts():
 	major=None
 	minor=None
 	filt=None
+	algo=LBDOT
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:v"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version"]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:vf"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version","fine"]
 	
 	if len(sys.argv[1:])==0:
 		usage()
@@ -144,6 +150,9 @@ def parseopts():
 			
 		elif o in ("-F","--filter"):
 			filt=int(a)
+		
+		elif o in ("-f","--fine"):
+			algo=ZANGYUANG
 			
 		elif o in ("-v","--version"):
 			version()
@@ -158,10 +167,28 @@ def parseopts():
 				usage()
 				sys.exit(3)
 				
-	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt
+	#sanity check options
+	if ktup>12:
+		print "ERROR: maximum ktup size is 12"
+		sys.exit(4)
+	if ktup<4:
+		print "ERROR: minimum ktup size is 12"
+		sys.exit(4)
+		
+	if window<ktup:
+		print "ERROR: window size must be at least ktup size"
+		sys.exit(5)
+	if minmatch<ktup:
+		print "ERROR: minmatch size must be at least ktup size"
+		sys.exit(6)
+	if mismatch>=window:
+		print "ERROR: mismatch size must be at less than window size, otherwise everything is a dot."
+		sys.exit(7)
+				
+	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo
 	
 def main():
-	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt=parseopts()
+	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo=parseopts()
 	
 	if DEBUG:
 		print "xsequences:",xseqfiles
@@ -178,9 +205,12 @@ def main():
 		print "minor",minor
 		print "filter",filt
 	
-	from DotPlot import DotPlot
+	from DotPlot import DotPlot, LBDotPlot
 	
-	plot=DotPlot(xseqfiles,yseqfiles,ktup, window, minmatch, mismatch)
+	if algo==ZANGYUANG:
+		plot=DotPlot(xseqfiles,yseqfiles,ktup, window, minmatch, mismatch)
+	else:
+		plot=LBDotPlot(xseqfiles,yseqfiles,ktup, window, minmatch, mismatch)
 	
 	if loadfile!=None:
 		#load the dotstore from a previous run

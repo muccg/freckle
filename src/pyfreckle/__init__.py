@@ -64,3 +64,7 @@ def buildMappingTables( sequence, ktuplesize, alphabet=lib.Bases ):
 def doComparison(tables, tabseq, newseq, ktup, window, mismatch, minmatch, bases=lib.Bases):
 	return DotStore(lib.doComparison(tables,tabseq,newseq,ktup,window,mismatch,minmatch,bases))
 	
+def doFastComparison(seq1, seq2, ktuplesize=4, window=10, mismatch=0, minmatch=4):
+	return DotStore(lib.DoFastComparison(seq1,seq2,len(seq1),len(seq2),window,mismatch,0,ktuplesize))
+
+	

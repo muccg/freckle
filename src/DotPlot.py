@@ -203,13 +203,16 @@ class DotPlot:
 		compseq=''.join([(a in 'ACGT') and a or '.'  for a in self.GetSubSequence(dimension,start,end).data])
 		
 		# make a dotstore for this region
-		dotstore=doComparison(tables[3], tables[2], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
+		dotstore=self.Compare(tables[3], tables[2], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
 		
 		# and a reverse dotstore
-		revdotstore=doComparison(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
+		revdotstore=self.Compare(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
 		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
 		
 		return (dotstore, revdotstore)
+	
+	def Compare(self,table,tableseq,compseq,ktup,window,mismatch,minmatch):
+		return doComparison(table,tableseq,compseq,ktup,window,mismatch,minmatch)
 	
 	def Save(self,filename):
 		"""
@@ -523,7 +526,7 @@ class DotPlot:
 		axis=1
 		files=self.filenames
 		boundids=self.sequenceboundids
-		seqys=[0]+self.seqybounds
+		seqys=[0]+self.seqybounds+[size[1]]
 		seqyoff=1
 		for file in boundids[axis]:
 			for ids in file:
@@ -572,7 +575,7 @@ class DotPlot:
 		axis=0
 		files=self.filenames
 		boundids=self.sequenceboundids
-		seqxs=[0]+self.seqxbounds
+		seqxs=[0]+self.seqxbounds+[size[0]]
 		seqxoff=1
 		for file in boundids[axis]:
 			for ids in file:
@@ -735,7 +738,10 @@ class DotPlot:
 
 
 
-
+class LBDotPlot(DotPlot):
+	"""Overrides the standard DotPlot class and replaces dot plot calculation with lbdot calculator"""
+	def Compare(self,table,tableseq,compseq,ktup,window,mismatch,minmatch):
+		return doFastComparison(tableseq,compseq,ktup,window,mismatch,minmatch)
 
 
 #	
