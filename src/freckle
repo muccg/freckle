@@ -47,7 +47,7 @@ def usage():
 	print "-M\t--major=\toverride the automatic major tick seperation with this value"
 	print "-T\t--minor=\toverride the automatic minor tick seperation with this value"
 	print "-F\t--filter=\tfilter the dotplot to only include matches at least this long"
-	print "-f\t--fine=\tuse the slower finer algorithm to generate the dotplot. Works with lower ktuple and match sizes but takes significantly longer."
+	print "-f\t--fine\tuse the slower finer algorithm to generate the dotplot. Works with lower ktuple and match sizes but takes significantly longer."
 	print "-v\t--version\tdisplay version information"
 	print
 	print "Examples:"
