@@ -15,6 +15,16 @@ from time import time
 # switch this to True to get debug messages
 DEBUG=False
 
+# default parameters
+defimagesize=512
+defktup=12
+defwindow=12
+defminmatch=12
+defmismatch=0
+
+# version
+versionstring="0.2"
+
 def usage():
 	"""print the usage of the programme"""
 	print "Usage:"
@@ -23,16 +33,17 @@ def usage():
 	print "-x\t--xfile=\ta FASTA file for a sequence to be displayed on the x axis"
 	print "-y\t--yfile=\ta FASTA file for a sequence to be displayed on the y axis"
 	print "-o\t--output=\tthe image file to write the output to."
-	print "-s\t--size=\t\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger."
-	print "-k\t--ktup=\t\tktuple size for tokenisation"
-	print "-w\t--window=\twindow size for comparing mismatches"
-	print "-m\t--minmatch=\tminimum match length to be included"
-	print "-d\t--mismatch=\tnumber of mismatches allowed per window of sequence"
+	print "-s\t--size=\t\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger. [Default: %d]"%defimagesize
+	print "-k\t--ktup=\t\tktuple size for tokenisation. [Default: %d]"%defktup
+	print "-w\t--window=\twindow size for comparing mismatches. [Default: %d]"%defwindow
+	print "-m\t--minmatch=\tminimum match length to be included. [Default: %d]"%defminmatch
+	print "-d\t--mismatch=\tnumber of mismatches allowed per window of sequence. [Default: %d]"%defmismatch
 	print "-S\t--save=\t\tsave the computed dotplot as the specified file"
 	print "-L\t--load=\t\tload the precomputed dotplot from the specified file"
 	print "-M\t--major=\toverride the automatic major tick seperation with this value"
 	print "-T\t--minor=\toverride the automatic minor tick seperation with this value"
 	print "-F\t--filter=\tfilter the dotplot to only include matches at least this long"
+	print "-v\t--version\tdisplay version information"
 	print
 	print "Examples:"
 	print
@@ -51,6 +62,10 @@ def usage():
 	print "load a previous dotplot and filter out all the matches less than 30 in length. Draw the resulting image as a graph. Save the output aswell"
 	print " %s -L sequence.dotplot -F 30 -s 2048 -o image.png -S sequence_over30.dotplot"%sys.argv[0]
 	
+def version():
+	print "Freckle dot plotter version "+versionstring
+	print "Copyright (C) 2007-2008 Center for Comparative Genomics, Murdoch University."
+	print "Developed by Crispin Wellington <cwellington@ccg.murdoch.edu.au>"
 	
 def parseopts():
 	"""parse the command line options and return them"""
@@ -59,11 +74,11 @@ def parseopts():
 	xseq=[]
 	yseq=[]
 	outfile=None
-	imagesize=512
-	ktup=8
-	window=8
-	minmatch=8
-	mismatch=0
+	imagesize=defimagesize
+	ktup=defktup
+	window=defwindow
+	minmatch=defminmatch
+	mismatch=defmismatch
 	savefile=None
 	loadfile=None
 	major=None
@@ -71,8 +86,8 @@ def parseopts():
 	filt=None
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter="]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:v"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version"]
 	
 	if len(sys.argv[1:])==0:
 		usage()
@@ -129,6 +144,10 @@ def parseopts():
 			
 		elif o in ("-F","--filter"):
 			filt=int(a)
+			
+		elif o in ("-v","--version"):
+			version()
+			sys.exit(0)
 			
 		elif o in ("-s","--size"):
 			# try and parse the size string
@@ -229,48 +248,7 @@ def main():
 		image.save(outfile)
 		
 	sys.exit(0)
-	
-	
 
-	
-	
-def dummy():
-	
-	# save the 
-	
-	if DEBUG:
-		print "Matrix size: %d x %d"%(xsize,ysize)
-	
-	windowsize=1024*16
-	window=zeros( (windowsize,windowsize), bool )
-	
-	destination=Image.new("RGB", imagesize, (255,255,255))
-	
-	for winx in xrange((xsize/windowsize)+1):
-		for winy in xrange((ysize/windowsize)+1):
-			if DEBUG:
-				print "processing window %d,%d"%(winx,winy)
-				
-				seqx=getsubseq(xseqfiles,winx*windowsize)
-				print seqx
-				
-				
-def getsubseq(filelist,start,end):
-	pass
-				
-		
-	# create our whole array
-	#points=zeros( (xsize>>2,ysize), int32 )
-	
-	
-	
-	#handle = open(xseqfiles[0])
-	#for seq_record in SeqIO.parse(handle, "fasta") :
-		#print seq_record.id
-		#print seq_record.seq
-		#print len(seq_record.seq)
-	#handle.close()
-		
 
 if __name__ == "__main__":
     main()

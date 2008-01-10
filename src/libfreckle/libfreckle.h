@@ -15,7 +15,10 @@ typedef unsigned long long int u64;
 //typedef u64 TupleID;
 
 /* this gives us a maximum ktuple size of 16 for 4 base pairs. But will work well on 32 bit systems */
-typedef u32 TupleID;
+typedef unsigned int TupleID;
+
+/* the type of var our C and D tables are */
+typedef unsigned int TupleStore;
 
 const char *Bases="ACGT.";							// . means UNKNOWN
 const char *Aminos="ACDEFGHIKLMNPQRSTVWY-.";					// - = stop codon    . means UNKNOWN
@@ -35,12 +38,16 @@ const char TranslateUniversal[]="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVV
 // Function prototypes
 int ipow(int x, int n);
 TupleID getTupleID(const char *tuple, int len, const char *bases=Bases);
-int **buildMappingTables( const char *sequence, int ktuplesize, const char *bases=Bases );
+TupleStore **buildMappingTables( const char *sequence, int ktuplesize, const char *bases=Bases );
 void freeMappingTables(int **tables);
 int sum(int *buffer, int length);
 int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int k, int threshold, int window);
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases=Bases );
+DotStore *doComparison(unsigned int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases=Bases );
 DotStore *makeDotComparison(const char *seq1, const char *seq2, int ktuplesize, int window, int mismatch, int minmatch);
+
+// lbdot comparison
+// int DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,char *Name1, char *Name2, 
+// 						   int CompWind,int CompMism, int nMaxRepeatKtup,ArrayDotPoint	*PlusDotArray,ArrayDotPoint	*MinusDotArray);
 
 // helper functions
 DotStore *NewDotStore();

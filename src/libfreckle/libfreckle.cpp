@@ -45,6 +45,21 @@ int ipow(int x, int n)
 }
 
 /**
+** \brief calculates the nth power of x.
+** \details Uses unsigned longs to calculate the nth power of x
+** \param x the mantissa
+** \param n the exponent
+** \return x^n
+*/
+TupleStore uipow(TupleStore  base, TupleStore  exponent)
+{
+	if(exponent==0)
+		return 1;
+	exponent -= 1;
+	return base * uipow(base, exponent);
+}
+
+/**
 ** \brief return the tuple id for len characters starting at tuple
 ** \details pass this a pointer to the base of a sequence string and a length.
 ** It will return the ktuple index of that sequence. It does this without building
@@ -65,10 +80,14 @@ TupleID getTupleID(const char *tuple, int len, const char *bases)
 		assert(index>=0 && index<(int)strlen(bases));		// it should be within range
 		assert((index & BASE_MASK(bases)) == index);			// it shouldn't have any extra bits
 		
-		id=id<<BASE_BIT_SHIFT(bases);		// right shift the id to make space for this new sequence char
+		id=id * BASE_PAIRS(bases);		// 
 	
-		id |= index;			// add the index bits onto the right
+		id += index;			// add the index bits onto the right
 	}
+
+	// assert that the tuple id is in a valid range
+	assert(id>=0);
+	assert(id<uipow(BASE_PAIRS(bases),len));
 
 	// make sure it doesnt overflow
 	assert(id+1);
@@ -84,21 +103,21 @@ TupleID getTupleID(const char *tuple, int len, const char *bases)
 ** \param bases A pointer to the base pair character set. Use "Bases" or "Aminos" from the library
 ** \return returns a pointer to a table of two pointers. table[0] points to the location of C, and table[1] to D
 */
-int **buildMappingTables( const char *sequence, int ktuplesize, const char *bases )
+TupleStore **buildMappingTables( const char *sequence, int ktuplesize, const char *bases )
 {
 	int seqlen=strlen(sequence);
 	assert(seqlen>0);
 
-	int ktuplearraysize=ipow(BASE_MASK(bases)+1,ktuplesize);
+	TupleStore ktuplearraysize=uipow(BASE_PAIRS(bases),ktuplesize);
 	int darraysize=seqlen-ktuplesize+1;
 	
 	// we allocate our arrays
-	int *C=new int [ktuplearraysize];
-	int *D=new int [darraysize];
+	TupleStore *C=new TupleStore [ktuplearraysize];
+	TupleStore *D=new TupleStore [darraysize];
 	
 	// lets zero our arrays
-	memset(C, 0, sizeof(int)*ktuplearraysize);
-	memset(D, 0, sizeof(int)*darraysize);
+	memset(C, 0, sizeof(TupleStore)*ktuplearraysize);
+	memset(D, 0, sizeof(TupleStore)*darraysize);
 
 	// Initialise D
 	const char *tuple=sequence;
@@ -108,13 +127,19 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 
 	// Build the tables
 	tuple=sequence;
-	int cval=0, dval=0;
+	TupleStore cval=0;
+	TupleStore dval=0;
 	for(int i=0; i<darraysize; i++, tuple++)
 	{
+// 		printf("%d\n",i);
 		// the index, i, of D is assigned to C[D[i]]. So if D[1]=3, then C[3]=1
 		// of course all our C array offsets are 0 based, but the algorithm REQUIRES 1 based, because 0 is a terminator
 		// if C[D[i]]!=0, then it already has an index. that value should be stored in D[i] before the C value is set
 		dval=D[i];
+// 		if(!dval<=ktuplearraysize)
+//  			printf("%llu <= %llu\n",dval,ktuplearraysize);
+		assert(dval<=ktuplearraysize);
+		assert(dval>=1);
 		cval=C[ dval-1 ];
 		if(cval)
 		{
@@ -130,7 +155,7 @@ int **buildMappingTables( const char *sequence, int ktuplesize, const char *base
 		}
 	}
 	
-	int **pointertable=new int *[2];
+	TupleStore **pointertable=new TupleStore *[2];
 	pointertable[0]=C;
 	pointertable[1]=D;
 
@@ -220,12 +245,12 @@ int matchAboveThreshold(const char *seq1, int p1, const char *seq2, int p2, int 
 ** \param mismatch how many characters per window can be allowed to mismatch for it still to be considered "matching"
 ** \param minmatch the minimum match length to store a dot for. This must be at least the size of the ktuple.
 */
-DotStore *doComparison(int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases )
+DotStore *doComparison(unsigned int **tables, const char *tablesequence, const char *newsequence, int ktuplesize, int window, int mismatch, int minmatch, const char *bases )
 {
 	assert(mismatch<=window);
 	assert(window>=ktuplesize);
 
-	int *C, *D;
+	unsigned int *C, *D;
 	DotStore *dotstore=new DotStore();
 	C=tables[0];
 	D=tables[1];
@@ -325,7 +350,7 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 	char **seq2translated=convertSequence(seq2);
 
 	//build three mapping tables for the 3 reading frames of sequence 1
-	int ***mappingtables=new int **[3];
+	unsigned int ***mappingtables=new unsigned int **[3];
 	for(int i=0; i<3; i++)
 	{
 		printf("=%d=\n",i);
@@ -369,6 +394,295 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 	return dotstore;
 }
 
+// This is the obfuscated lbdot original
+// int DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,char *Name1, char *Name2, 
+// 						   int CompWind,int CompMism, int nMaxRepeatKtup,ArrayDotPoint	*PlusDotArray,ArrayDotPoint	*MinusDotArray)
+// {
+// int x,i,ix,j,cmpNum, ic, ct, ctt, nBreak;
+// int CompUnit=CompWind;
+// int CompErr=CompMism;
+// int CompKtup;
+// int Length1=SeqLen1;
+// int Length2=SeqLen2;
+// bool bRCSeq=false, ok=true;
+// clock_t btm0, btm1;
+// 
+// int Reject1=0, Reject2=0;
+// int nQualified=0;
+// DotPoint cp;
+// char *s1= Seq1;
+// char *s2= Seq2;
+// int ONE=1, *pc;
+// int *d1, *c1;
+// int v[64], pos, scs, dp=-CompErr;
+// char *sc=new char [CompUnit+2];
+// 
+// 	if(Seq1==Seq2){
+// 		s2=new char [Length2+2];
+// 		strcpy(s2, Seq2);
+// 	}
+// 
+// 	cmpNum=2;
+// 
+// 	btm0=clock();
+// 
+// 	v[0]=1;
+// 	CompKtup=(CompUnit<nMaxDNAKtup)?CompUnit:nMaxDNAKtup;
+// 	for (i=1;i<=nMaxDNAKtup;i++) v[i]=v[i-1]*4;
+// 
+// 	printf("Dotplot Fast Method, win=%d, mismatch=%d, ktup=%d\n",
+// 			CompWind,CompMism,CompKtup);
+// 
+// 	int pm=v[CompKtup];
+// 	c1=new int [pm+2];
+// 	d1=new int [Length1+2];
+// int *cd=new int [Length1+2];
+// 	for (i=0;i<=Length1; i++) cd[i]=0;
+// 
+// 	if(nMaxRepeatKtup>200){// may significantly decrease computing for repeatitive seq
+// 		int numRepeatsRemoved=EncodeNTSeqConditional(s1,0,Length1-1, c1,d1,cd,CompKtup, nMaxRepeatKtup);
+// 		if(numRepeatsRemoved>0)
+// 			printf(repFmt,	numRepeatsRemoved,nMaxRepeatKtup);
+// 	} else {
+// 		EncodeNTSeq(s1,0,Length1-1, c1,d1, CompKtup);
+// 		/// make sure c1[cd[]]>0
+// 		j=GetNtCode(s1,CompKtup,1, v);
+// 		for (i=0;i<Length1;i++) cd[i]=j;
+// 	}
+// 
+// 	btm1=clock();;
+// 	printf(FmtStr,Name1,Length1,(float)(btm1-btm0)/CLOCKS_PER_SEC);
+// 
+// 	printf("Comparing...\n");
+// 	for (ic=0;ic<cmpNum&&ok;ic++)  {
+// 		btm0=btm1;
+// 		Reject1=Reject2=0;
+// 		nQualified=0;
+// 		if(ic==1) {
+// 			bRCSeq=true;
+// 			RCseq(s2);
+// 		}
+// 
+// 		pc=(Seq1==Seq2&&!bRCSeq)?&j:&ONE;
+// 
+// 
+// 		int dd=Length2-CompKtup;
+// 		int ddt=dd/100+1;
+// 
+// 		if(Length2<pm*2){//bUseLessMem
+// 		////////when Length2>pm*2 the next method may run faster 
+// 		////////due to repetitive instructions with lookup table
+// //////////////////////////////////////////////////////////////////////
+// /////////////Here is the different block from above method/////+ j=d2[j] }
+// 			for(j=1;j<dd&&ok;j++){
+// 				i=GetNtCode(s2+j-1,CompKtup,1, v);
+// 				if (i<0) continue;
+// ////////////////////////////////////////////////////////////
+// 				ix=c1[i];
+// 				while (ix>=*pc) {
+// 					if((j>1&&ix>1)&&s2[j-2]==s1[ix-2]){
+// 						// if previous bases match, ignore current dot 
+// 						//// however, if previous pair was ignored due to high repeats,
+// 						// don't give up the current dot
+// 						if(c1[cd[ix-1]]>0||
+// 							(pc==&j&&j==ix)){/// same seq on diagnal
+// 							ix=d1[ix];
+// 							Reject1++;
+// 							continue;
+// 						}
+// 					}
+// 					ctt=Length2-j+1;
+// 					ct=Length1-ix+1;
+// 					if(ctt>ct) ctt=ct;
+// 					ct=CompKtup;
+// 					while(ct<ctt&&(s2[ct+j-1]==s1[ct+ix-1])) 	ct++;
+// 
+// 
+// 					if(CompErr>0){
+// 						scs=0;
+// 						memset(sc,0,CompUnit); //// match=0 mimatch=-1
+// 						pos=ct%CompUnit;
+// 						while(ct<ctt&&scs>=dp){
+// 							scs-=sc[pos];
+// 							if(s2[ct+j-1]==s1[ct+ix-1]) sc[pos]=0;
+// 							else sc[pos]=-1;
+// 							scs+=sc[pos];
+// 
+// //							pos=(pos+1)%CompUnit;/// this is slow
+// 							pos++; 
+// 							if(pos>=CompUnit) pos=0;
+// 							ct++;
+// 						}
+// 					}
+// 					
+// 					if(ct<CompUnit){
+// 						ix=d1[ix];
+// 						Reject2++;
+// 						continue; /// not long enough
+// 					}
+// 					nQualified++;
+// 
+// 					if(CompErr>0){/// try to extend ct as far as possible
+// 						nBreak=0;
+// 						while(ct<ctt&&nBreak<CompUnit){
+// 							scs-=sc[pos];
+// 							if(s2[ct+j-1]==s1[ct+ix-1]) sc[pos]=0;
+// 							else sc[pos]=-1;
+// 							scs+=sc[pos];
+// 
+// 							pos++;
+// 							if(pos>=CompUnit) pos=0;
+// 							ct++;
+// 
+// 							if(scs<dp) nBreak++;
+// 							else nBreak=0;
+// 						}
+// 						ct-=nBreak;
+// 
+// 					}
+// 					
+// 					cp.x=ix-1;cp.y=j-1;cp.z=ct;
+// 
+// 					if(bRCSeq) {
+// 						MinusDotArray->Add(cp);
+// 					} else {
+// 						PlusDotArray->Add(cp);
+// 							if(*pc>1){/// Add mirror point
+// 								x=cp.x; cp.x=cp.y; cp.y=x;
+// 								PlusDotArray->Add(cp);
+// 								x=cp.x; cp.x=cp.y; cp.y=x;
+// 							}
+// 					}
+// 
+// 					ix=d1[ix];
+// 				}
+// //				if (j%ddt==0){
+// //					printf("%d%%", ic*50+MulDiv(j,100,dd*cmpNum));
+// //				}
+// 			}
+// 		} else {
+// 			int *c2=NULL;
+// 			int *d2=NULL; 
+// 
+// 			if(Seq1==Seq2&&!bRCSeq){
+// 				c2=c1; d2=d1;
+// 				pc=&j;
+// 			} else {
+// 				pc=&ONE;
+// 				c2=new int [pm+2];d2=new int [Length2+2];
+// 				EncodeNTSeq(s2,0,Length2-1, c2,d2, CompKtup);
+// 
+// 				btm1=clock();;
+// 				printf(FmtStr,Name2,Length2,(float)(btm1-btm0)/CLOCKS_PER_SEC);
+// 				btm0=btm1;
+// 			}
+// 
+// 
+// 			ddt=pm/100+1;
+// //////////////////////////////////////////////////////////////////////
+// /////////////Here is the different block from above method/////+ j=d2[j] }
+// 			for (i=0;i<pm&&ok;i++){
+// 				if(c1[i]<1) continue; /// ignore if the other seq no such k-tuple
+// 				j=c2[i];
+// 				while(j>0){
+// ////////////////////////////////////////////////////////////
+// 					ix=c1[i];
+// 					while (ix>=*pc) {
+// 						if((j>1&&ix>1)&&s2[j-2]==s1[ix-2]) {
+// 						// if previous bases match, ignore current dot 
+// 						//// however, if previous pair was ignored due to high repeats,
+// 						// don't give up the current dot
+// 							if(c1[cd[ix-1]]>0||
+// 								(pc==&j&&j==ix)){/// same seq on diagnal
+// 								ix=d1[ix];
+// 								Reject1++;
+// 								continue;
+// 							}
+// 						}
+// 						ctt=Length2-j+1;
+// 						ct=Length1-ix+1;
+// 						if(ctt>ct) ctt=ct;
+// 						ct=CompKtup;
+// 						while(ct<ctt&&(s2[ct+j-1]==s1[ct+ix-1])) 	ct++;
+// 
+// 						if(CompErr>0){
+// 							scs=0;
+// 							memset(sc,0,CompUnit); //// match=0 mimatch=-1
+// 							pos=ct%CompUnit;
+// 							while(ct<ctt&&scs>=dp){
+// 								scs-=sc[pos];
+// 								if(s2[ct+j-1]==s1[ct+ix-1]) sc[pos]=0;
+// 								else sc[pos]=-1;
+// 								scs+=sc[pos];
+// 
+// //							pos=(pos+1)%CompUnit;/// this is slow
+// 								pos++; 
+// 								if(pos>=CompUnit) pos=0;
+// 								ct++;
+// 							}
+// 						}
+// 					
+// 						if(ct<CompUnit){
+// 							ix=d1[ix];
+// 							Reject2++;
+// 							continue; /// not long enough
+// 						}
+// 						nQualified++;
+// 
+// 						if(CompErr>0){/// try to extend ct as far as possible
+// 							nBreak=0;
+// 							while(ct<ctt&&nBreak<CompUnit){
+// 								scs-=sc[pos];
+// 								if(s2[ct+j-1]==s1[ct+ix-1]) sc[pos]=0;
+// 								else sc[pos]=-1;
+// 								scs+=sc[pos];
+// 
+// 								pos++;
+// 								if(pos>=CompUnit) pos=0;
+// 								ct++;
+// 
+// 								if(scs<dp) nBreak++;
+// 								else nBreak=0;
+// 							}
+// 							ct-=nBreak;
+// 						}
+// 					
+// 						cp.x=ix-1;cp.y=j-1;cp.z=ct;
+// 
+// 						if(bRCSeq) {
+// 							MinusDotArray->Add(cp);
+// 						} else {
+// 							PlusDotArray->Add(cp);
+// 							if(*pc>1){/// Add mirror point
+// 								x=cp.x; cp.x=cp.y; cp.y=x;
+// 								PlusDotArray->Add(cp);
+// 								x=cp.x; cp.x=cp.y; cp.y=x;
+// 							}
+// 						}
+// 
+// 						ix=d1[ix];
+// 					}
+// //					if (i%ddt==0){
+// //						printf("%d%%", ic*50+MulDiv(i,100,pm*cmpNum));
+// //					}
+// 					j=d2[j];
+// 				}
+// 			}
+// 			if(c2!=c1) delete c2;
+// 			if(d2!=d1) delete d2;
+// 		}
+// 		if(bRCSeq) 	RCseq(s2);
+// 		btm1=clock();;
+// 		printf(cFmt,(ic==1)?"Reverse":"Direct",Length1,Length2, 
+// 			(float)(btm1-btm0)/CLOCKS_PER_SEC);
+// 		printf(resFmt,	Reject1,Reject2,nQualified);
+// 	}
+// 	delete c1; delete d1;delete sc; delete cd;
+// 
+// 	if(Seq1==Seq2)delete s2;
+// 
+// 	return CompKtup;
+// };
 
 
 /*

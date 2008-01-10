@@ -20,6 +20,7 @@ def locatefile(filename):
 	return res
 	
 def getfont(filename,size):
+	"""try really hard to find and load a particular file"""
 	try:
 		font = ImageFont.truetype(filename, size)
 	except IOError, e:
@@ -749,7 +750,7 @@ class TestDotPlot(unittest.TestCase):
 		from glob import glob
 		self.filelist=glob("TestFastaFiles/*.fasta")
 	
-	def notestBounds(self):
+	def testBounds(self):
 		"""Test the generation and metadata"""
 		dp=DotPlot(self.filelist, self.filelist)
 		
@@ -780,7 +781,7 @@ class TestDotPlot(unittest.TestCase):
 			for num in xrange(len(flatgsb)):
 				self.assertEquals(flatgsb[num], sum(flatsb[:num+1]))
 				
-	def notestGetSubSequence(self):
+	def testGetSubSequence(self):
 		"""Test the retreival of subsequences"""
 		dp=DotPlot(self.filelist, self.filelist)
 		
@@ -800,7 +801,7 @@ class TestDotPlot(unittest.TestCase):
 			subseq=dp.GetSubSequence(0,start,end)
 			self.assertEquals(subseq.tostring(),subseqcomparison.tostring())
 		
-	def notestCompareSequences(self):
+	def testCompareSequences(self):
 		"""Test the matrix comparison of sequences"""
 		dp=DotPlot(self.filelist, self.filelist)
 		
@@ -825,7 +826,7 @@ class TestDotPlot(unittest.TestCase):
 					self.assertEquals( matrix[ypos][xpos], fullseq[sx+xpos]==fullseq[sy+ypos] )
 					
 			
-	def notestMakeDotPlotSubImage(self):
+	def testMakeDotPlotSubImage(self):
 		dp=DotPlot(self.filelist, self.filelist)
 		
 		fullseq=dp.AssembleFullSequence(0)
@@ -834,13 +835,13 @@ class TestDotPlot(unittest.TestCase):
 		image=dp.MakeDotPlotSubImage(fullseq,fullseq)
 		image.save("test.png")
 		
-	def notestBigPlot(self):
+	def testBigPlot(self):
 		dp=DotPlot(self.filelist, self.filelist)
 		
 		image=dp.MakeDotPlotSubImage(dp.GetSubSequence(0,0,1024),dp.GetSubSequence(1,0,512),-5)
 		image.save("test.png")
 		
-	def notestPlotWithBorders(self):
+	def testPlotWithBorders(self):
 		dp=DotPlot(self.filelist, self.filelist)
 		
 		image=dp.DrawDotPlot(0,0,window=4)
