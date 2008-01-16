@@ -629,7 +629,7 @@ class DotPlot:
 		"""
 		draw the bounds as lines on the image
 		"""
-		print "DrawBounds(",image,",",xstart,",",ystart,",",xend,",",yend,")"
+		#print "DrawBounds(",image,",",xstart,",",ystart,",",xend,",",yend,")"
 		dc = ImageDraw.Draw(image,"RGBA")
 		
 		#dc.text((10, 25), "world", font=font,fill=(0,0,0,255))
@@ -645,10 +645,10 @@ class DotPlot:
 		self.seqybounds=seqybounds[:]
 		self.seqxbounds=seqxbounds[:]
 			
-		print "globalseqbounds[0]",len(self.globalsequencebounds[0][0])
-		print "globalseqbounds[1]",len(self.globalsequencebounds[1][0])
-		print "seqxbounds",len(self.seqxbounds)
-		print "seqybounds",len(self.seqybounds)
+		#print "globalseqbounds[0]",len(self.globalsequencebounds[0][0])
+		#print "globalseqbounds[1]",len(self.globalsequencebounds[1][0])
+		#print "seqxbounds",len(self.seqxbounds)
+		#print "seqybounds",len(self.seqybounds)
 		
 			
 		# find bounds that are in this range and store their relative position in this image
