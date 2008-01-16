@@ -49,6 +49,11 @@ lib.buildMappingTables.restype = c_void_p
 lib.doComparison.argtypes=[c_void_p, c_char_p, c_char_p, c_int, c_int, c_int, c_int, c_char_p]
 lib.DotStoreToBuffer.restype = POINTER(c_int)
 lib.DotStoreFromBuffer.argtypes = [ c_void_p, POINTER(c_int) ]
+lib.DotStoreGetMaxX.restype=c_int
+lib.DotStoreGetMaxY.restype=c_int
+lib.DotStoreSetMaxX.argtypes=[c_void_p,c_int]
+lib.DotStoreSetMaxY.argtypes=[c_void_p,c_int]
+
 
 # now our base library functions
 #def buildMappingTables( sequence, ktuplesize ):

@@ -217,6 +217,19 @@ class DotPlot:
 		revdotstore=self.Compare(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
 		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
 		
+		# make sure the dotstore sizes are the same (and maximal)
+		maxx=max(dotstore.GetMaxX(), revdotstore.GetMaxX())
+		maxy=max(dotstore.GetMaxY(), revdotstore.GetMaxY())
+		
+		print 'maxx',maxx
+		print 'maxy',maxx
+		
+		dotstore.SetMaxX(maxx)
+		dotstore.SetMaxY(maxy)
+		revdotstore.SetMaxX(maxx)
+		revdotstore.SetMaxY(maxy)
+		
+		
 		return (dotstore, revdotstore)
 	
 	def Compare(self,table,tableseq,compseq,ktup,window,mismatch,minmatch):

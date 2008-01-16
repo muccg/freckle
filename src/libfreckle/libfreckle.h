@@ -72,6 +72,13 @@ int DotStoreBufferSize(DotStore *store, int *buffer);
 void FreeIntBuffer(int *buffer);
 DotStore *DotStoreFilter(DotStore *store, int minlen);
 
+// maximums
+void DotStoreSetMaxX(DotStore *store, int max);
+void DotStoreSetMaxY(DotStore *store, int max);
+int DotStoreGetMaxX(DotStore *store);
+int DotStoreGetMaxY(DotStore *store);
+
+
 // DotGrid helper functions and wrappers
 DotGrid *NewDotGrid();
 void DelDotGrid(DotGrid *grid);

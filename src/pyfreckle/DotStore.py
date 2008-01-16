@@ -27,6 +27,21 @@ class DotStore:
 		else:
 			return self.GetDot(item)
 	
+	def SetMaxX(self,x):
+		self.lib.DotStoreSetMaxX(self.dotstore, x)
+		
+	def SetMaxY(self,y):
+		self.lib.DotStoreSetMaxY(self.dotstore, y)
+		
+	def GetMaxX(self):
+		return self.lib.DotStoreGetMaxX(self.dotstore)
+		
+	def GetMaxY(self):
+		return self.lib.DotStoreGetMaxY(self.dotstore)
+		
+	
+	
+	
 	def GetDot(self, index):
 		if index<0:
 			index=len(self)+index

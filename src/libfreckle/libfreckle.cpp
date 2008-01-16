@@ -860,6 +860,11 @@ int DotStoreBufferSize(DotStore *store, int *buffer) { return store->BufferSize(
 void FreeIntBuffer(int *buffer) { assert(buffer); delete buffer; }
 DotStore *DotStoreFilter(DotStore *store, int minlen) { return store->Filter(minlen); } 
 
+void DotStoreSetMaxX(DotStore *store, int max) {store->SetMaxX(max);}
+void DotStoreSetMaxY(DotStore *store, int max) {store->SetMaxY(max);}
+int DotStoreGetMaxX(DotStore *store) {return store->GetMaxX();}
+int DotStoreGetMaxY(DotStore *store) {return store->GetMaxY();}
+
 /*
 ** helper function to interface with the dotgrid
 */

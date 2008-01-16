@@ -47,6 +47,28 @@ public:
 	//! \brief interpolate long matches into many small matches
 	void Interpolate(int window);
 
+	inline int GetMaxX() const
+	{
+		return maxx;
+	}
+	
+	inline int GetMaxY() const
+	{
+		return maxy;
+	}
+
+	inline int SetMaxX(int m)
+	{
+		maxx=m;
+	}
+	
+	inline int SetMaxY(int m)
+	{
+		return maxy=m;
+	}
+
+	
+	
 	inline int GetDotX(int index)
 	{
 		return GetDot(index)->x;
