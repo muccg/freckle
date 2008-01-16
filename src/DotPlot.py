@@ -109,6 +109,14 @@ class DotPlot:
 		# scale is initially unknown
 		self.scale=None
 		
+		# do we autocalc window size
+		if window==None:
+			window=sum(self.size)/1000
+			if window>3:
+				window=int(log(window)*3.5)
+			else:
+				window=8
+		
 		# save our parameters
 		assert(minmatch>=ktup)
 		assert(ktup>=4)
@@ -371,8 +379,8 @@ class DotPlot:
 		string=self.grid[storekey].ToString()
 		image=Image.fromstring("L", (self.grid[storekey].GetWidth(),self.grid[storekey].GetHeight()), string).convert("RGB")
 		
-		self.DrawBounds(image,storekey[1],storekey[3],storekey[2],storekey[4])
-		image=self.AddAxis(image,storekey[1],storekey[3],storekey[2],storekey[4],major=major,minor=minor)
+		self.DrawBounds(image,storekey[3],storekey[1],storekey[4],storekey[2])
+		image=self.AddAxis(image,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor)
 		
 		return image
 	
@@ -389,8 +397,9 @@ class DotPlot:
 		\return the annotated image
 		"""
 		size=image.size
-		font = getfont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 10)
-		titlefont = getfont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
+		font = getfont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12)
+		idfont = getfont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 10)
+		titlefont = getfont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 14)
 		namelist=["",""]
 		if len(self.filenames[0])==1:
 			namelist[0]=os.path.basename(self.filenames[0][0])
@@ -449,15 +458,15 @@ class DotPlot:
 		
 		# find the side width
 		ids=[]
-		[[ids.append(a) for a in b] for b in self.sequenceboundids[1]]		# 1 is dimension (y)
-		idymaxlen=max([font.getsize(a)[0] for a in ids])
+		[[ids.append(a) for a in b] for b in self.sequenceboundids[0]]		# 0 is dimension (x)
+		idxmaxlen=max([idfont.getsize(a)[0] for a in ids])
 		
 		# find the bottom height
 		idys=[]
-		[[idys.append(a) for a in b] for b in self.sequenceboundids[0]]		# 0 is dimension (x)
-		idxmaxlen=max([font.getsize(a)[0] for a in idys])
+		[[idys.append(a) for a in b] for b in self.sequenceboundids[1]]		# 1 is dimension (y)
+		idymaxlen=max([idfont.getsize(a)[0] for a in idys])
 		
-		bottomimagesize=(idxmaxlen+filexmaxlen+2*SIDEGUTTER, size[0])
+		bottomimagesize=(idxmaxlen+filexmaxlen+2*SIDEGUTTER, size[0])		
 		
 		# work out the largest sequence number
 		lenseq1=x2-x1
@@ -532,10 +541,10 @@ class DotPlot:
 			for ids in file:
 				idy=seqys[seqyoff]-(seqys[seqyoff]-seqys[seqyoff-1])/2
 				
-				textw,texth=font.getsize(ids)
+				textw,texth=idfont.getsize(ids)
 				x=aisize[0]-XOFF-idymaxlen-fileymaxlen-SIDEGUTTER-SIDEGUTTER/2
 				y=YOFF+titleheight+TITLEGAP+ticklength+axistextheight+idy-texth/2
-				dc.text( (x,y), ids, fill=(0,0,255,255), font=font)
+				dc.text( (x,y), ids, fill=(0,0,255,255), font=idfont)
 				
 				seqyoff+=1
 		
@@ -581,9 +590,9 @@ class DotPlot:
 			for ids in file:
 				idx=seqxs[seqxoff]-(seqxs[seqxoff]-seqxs[seqxoff-1])/2
 				
-				textw,texth=font.getsize(ids)
+				textw,texth=idfont.getsize(ids)
 				y=bottomimagesize[1]-idx-texth/2
-				dc.text( (0,y), ids, fill=(0,0,255,255), font=font)
+				dc.text( (0,y), ids, fill=(0,0,255,255), font=idfont)
 				
 				seqxoff+=1
 		
@@ -602,10 +611,10 @@ class DotPlot:
 			dc.text( (x,y), file, fill=(255,0,0,255), font=font)
 			
 			# draw the lines
-			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)) ], fill=(255,0,0,128) )
-			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff]+tops-1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1)) ], fill=(255,0,0,128) )
-			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1))], fill=(255,0,0,128))
-			dc.line( [ (bottomimagesize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3,(y+fnameh/2)),(bottomimagesize[0]-XOFF-fileymaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=(255,0,0,128))
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)) ], fill=(255,0,0,128) )
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff]+tops-1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1)) ], fill=(255,0,0,128) )
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1))], fill=(255,0,0,128))
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3,(y+fnameh/2)),(bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=(255,0,0,128))
 			
 			fyoff+=1
 		
@@ -616,10 +625,11 @@ class DotPlot:
 		
 		
 	
-	def DrawBounds(self,image,xstart,ystart,xend,yend,filebound=(255,0,0,128),seqbound=(0,0,255,128)):
+	def DrawBounds(self,image,xstart,ystart,xend,yend,filebound=(255,0,0,24),seqbound=(0,0,255,24)):
 		"""
-		\deprecated
+		draw the bounds as lines on the image
 		"""
+		print "DrawBounds(",image,",",xstart,",",ystart,",",xend,",",yend,")"
 		dc = ImageDraw.Draw(image,"RGBA")
 		
 		#dc.text((10, 25), "world", font=font,fill=(0,0,0,255))
@@ -634,6 +644,12 @@ class DotPlot:
 			
 		self.seqybounds=seqybounds[:]
 		self.seqxbounds=seqxbounds[:]
+			
+		print "globalseqbounds[0]",len(self.globalsequencebounds[0][0])
+		print "globalseqbounds[1]",len(self.globalsequencebounds[1][0])
+		print "seqxbounds",len(self.seqxbounds)
+		print "seqybounds",len(self.seqybounds)
+		
 			
 		# find bounds that are in this range and store their relative position in this image
 		filexbounds=[int(float(value-xstart)/scale) for value in self.globalfilebounds[0] if value>=xstart and value<=xend]

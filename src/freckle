@@ -16,14 +16,14 @@ from time import time
 DEBUG=False
 
 # default parameters
-defimagesize=512
+defimagesize=1024
 defktup=12
-defwindow=12
+defwindow=None				#autocalculate
 defminmatch=12
 defmismatch=0
 
 # version
-versionstring="0.3"
+versionstring="0.4"
 
 # algorithm defines
 LBDOT=0				#the default
@@ -175,13 +175,13 @@ def parseopts():
 		print "ERROR: minimum ktup size is 12"
 		sys.exit(4)
 		
-	if window<ktup:
+	if window != None and window<ktup:
 		print "ERROR: window size must be at least ktup size"
 		sys.exit(5)
 	if minmatch<ktup:
 		print "ERROR: minmatch size must be at least ktup size"
 		sys.exit(6)
-	if mismatch>=window:
+	if window != None and mismatch>=window:
 		print "ERROR: mismatch size must be at less than window size, otherwise everything is a dot."
 		sys.exit(7)
 				
