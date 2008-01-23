@@ -20,9 +20,9 @@ typedef unsigned int TupleID;
 /* the type of var our C and D tables are */
 typedef unsigned int TupleStore;
 
-const char *Bases="ACGT.";							// . means UNKNOWN
-const char *Aminos="ACDEFGHIKLMNPQRSTVWY-.";					// - = stop codon    . means UNKNOWN
-const char TranslateUniversal[]="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV-Y-YSSSS-CWCLFLF";
+extern const char *Bases;
+extern const char *Aminos;
+extern const char *TranslateUniversal;
 
 // this is a bit mask for the tuple id
 #define BASE_MASK(basestring)	(basestring==Bases?7:(basestring==Aminos?31:0))

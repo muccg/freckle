@@ -8,8 +8,6 @@ QuadTree::QuadTree(Type x1, Type y1, Type x2, Type y2)
 {
 	root=NULL;
 
-	printf("x1:%d, y1:%d, x2:%d, y2:%d\n", x1, y1, x2, y2);
-
 	assert(x1<x2);
 	assert(y1<y2);
 

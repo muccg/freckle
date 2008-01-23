@@ -57,14 +57,14 @@ public:
 		return maxy;
 	}
 
-	inline int SetMaxX(int m)
+	inline void SetMaxX(int m)
 	{
 		maxx=m;
 	}
 	
-	inline int SetMaxY(int m)
+	inline void SetMaxY(int m)
 	{
-		return maxy=m;
+		maxy=m;
 	}
 
 	

@@ -3,8 +3,9 @@ CC=gcc
 # CPPFLAGS=-fPIC -Wall -g -pg
 # LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 #CPPFLAGS=-fPIC -Wall -march=opteron
-CPPFLAGS=-fPIC -march=opteron
-LDFLAGS=-shared -Wl,-soname,test.so -lc -march=opteron
+ARCH = opteron
+CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
+LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 

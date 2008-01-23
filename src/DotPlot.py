@@ -44,6 +44,9 @@ def getfont(filename,size):
 class DotPlotFileError(Exception):
 	pass
 
+def decodeseq(seq):
+	return ''.join([(a in 'ACGT') and a or 'N'  for a in seq.data.upper()])
+
 class DotPlot:
 	"""
 	\brief Class encapsulating a DotPlot or a sub part thereof
@@ -174,7 +177,7 @@ class DotPlot:
 		end=self.ProcEnd(dimension,end)
 		
 		# munge anything thats not 'ACGT' into a '.'
-		subseq=''.join([(a in 'ACGT') and a or '.'  for a in self.GetSubSequence(dimension,start,end).data])
+		subseq=decodeseq(self.GetSubSequence(dimension,start,end))
 		
 		table=(start,end,subseq,buildMappingTables(subseq, self.ktup))
 		self.tables[dimension][(start,end)]=table
@@ -208,7 +211,7 @@ class DotPlot:
 		assert(tables)		# other dimension should be indexed
 		
 		# assemble our comparison sequence
-		compseq=''.join([(a in 'ACGT') and a or '.'  for a in self.GetSubSequence(dimension,start,end).data])
+		compseq=decodeseq(self.GetSubSequence(dimension,start,end))
 		
 		# make a dotstore for this region
 		dotstore=self.Compare(tables[3], tables[2], compseq, self.ktup, self.window, self.mismatch, self.minmatch)
@@ -216,13 +219,10 @@ class DotPlot:
 		# and a reverse dotstore
 		revdotstore=self.Compare(tables[3], tables[2], compseq[::-1], self.ktup, self.window, self.mismatch, self.minmatch)
 		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
-		
+				
 		# make sure the dotstore sizes are the same (and maximal)
 		maxx=max(dotstore.GetMaxX(), revdotstore.GetMaxX())
 		maxy=max(dotstore.GetMaxY(), revdotstore.GetMaxY())
-		
-		print 'maxx',maxx
-		print 'maxy',maxx
 		
 		dotstore.SetMaxX(maxx)
 		dotstore.SetMaxY(maxy)

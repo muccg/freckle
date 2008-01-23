@@ -29,8 +29,11 @@
 
 #include "libfreckle.h"
 
-
 extern "C" {
+
+const char *Bases="ACGTN";							// N means UNKNOWN
+const char *Aminos="ACDEFGHIKLMNPQRSTVWY-.";					// - = stop codon    . means UNKNOWN
+const char *TranslateUniversal="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV-Y-YSSSS-CWCLFLF";
 
 /**
 ** \brief calculates the nth power of x.
@@ -561,6 +564,24 @@ char *RCseq(char *a)
 // This is the obfuscated lbdot original
 DotStore *DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2, int CompWind,int CompMism, int nMaxRepeatKtup, int nMaxDNAKtup)
 {
+// printf("initcodetables, %d, %d, %d, %d (%d,%d)\n",CompWind, CompMism, nMaxRepeatKtup, nMaxDNAKtup,SeqLen1,SeqLen2);
+// 
+// printf("start seq 1: %s\n",strndup(Seq1,80));
+// printf("start seq 2: %s\n",strndup(Seq2,80));
+// printf("end seq 1: %s\n",strndup(Seq1+strlen(Seq1)-80,80));
+// printf("end seq 2: %s\n",strndup(Seq2+strlen(Seq2)-80,80));
+// 
+// printf("extra characters seq1:\n");
+// for(char *c=Seq1; *c; c++)
+// 	if(*c != 'A' && *c != 'C' && *c != 'G' && *c != 'T')
+// 		printf("%c",*c);
+// printf("\n\n");
+// printf("extra characters seq2:\n");
+// for(char *c=Seq2; *c; c++)
+// 	if(*c != 'A' && *c != 'C' && *c != 'G' && *c != 'T')
+// 		printf("%c",*c);
+// printf("\n\n");
+
 Init_code_tables();
 
 DotStore *PlusDotArray=new DotStore();
@@ -833,7 +854,7 @@ int *cd=new int [Length1+2];
 	if(Seq1==Seq2)delete s2;
 
 	delete MinusDotArray;
-
+	
 	PlusDotArray->Interpolate(CompWind);
 
 	return PlusDotArray;

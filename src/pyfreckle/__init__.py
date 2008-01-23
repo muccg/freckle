@@ -17,7 +17,7 @@ try:
 		__library_c_source__=os.path.join(os.environ['LD_LIBRARY_PATH'].split(':')[0],"libfreckle.so")
 		lib=cdll.LoadLibrary(__library_c_source__)
 except AttributeError, e:
-	OPATHS=['/usr/local/lib','/usr/lib','/lib',os.path.dirname(__file__)]
+	OPATHS=['./','/usr/local/lib','/usr/lib','/lib',os.path.dirname(__file__)]
 	PATH=OPATHS[::-1]
 	lib=None
 	while lib==None:
@@ -43,16 +43,26 @@ DotStore.lib=lib
 lib.Bases=c_char_p.in_dll(lib, "Bases")
 lib.Aminos=c_char_p.in_dll(lib, "Aminos")
 
+class c_void(Structure):
+    # c_void_p is a buggy return type, converting to int, so
+    # POINTER(None) == c_void_p is actually written as
+    # POINTER(c_void), so it can be treated as a real pointer.
+    _fields_ = [('dummy', c_int)]
+    
 # set passing and return types where needed
-lib.buildMappingTables.argtypes = [c_char_p, c_int, c_char_p]
-lib.buildMappingTables.restype = c_void_p
-lib.doComparison.argtypes=[c_void_p, c_char_p, c_char_p, c_int, c_int, c_int, c_int, c_char_p]
+lib.buildMappingTables.argtypes = [POINTER(c_char), c_int, POINTER(c_char)]
+lib.buildMappingTables.restype = POINTER(c_void)
+lib.doComparison.argtypes=[POINTER(c_void), POINTER(c_char), POINTER(c_char), c_int, c_int, c_int, c_int, POINTER(c_char)]
 lib.DotStoreToBuffer.restype = POINTER(c_int)
-lib.DotStoreFromBuffer.argtypes = [ c_void_p, POINTER(c_int) ]
+lib.DotStoreFromBuffer.argtypes = [ POINTER(c_void), POINTER(c_int) ]
 lib.DotStoreGetMaxX.restype=c_int
 lib.DotStoreGetMaxY.restype=c_int
 lib.DotStoreSetMaxX.argtypes=[c_void_p,c_int]
 lib.DotStoreSetMaxY.argtypes=[c_void_p,c_int]
+lib.DotGridToString.argtypes=[POINTER(c_void)]
+lib.DotGridToString.restype=POINTER(c_void)
+lib.NewDotGrid.argtypes=[]
+lib.NewDotGrid.restype=POINTER(c_void)
 
 
 # now our base library functions
