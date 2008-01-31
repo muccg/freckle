@@ -123,7 +123,8 @@ class DotPlot:
 		# save our parameters
 		assert(minmatch>=ktup)
 		assert(ktup>=4)
-		assert(window>=ktup)
+		if window<ktup:
+			window=ktup
 		self.ktup, self.window, self.minmatch, self.mismatch = ktup,window,minmatch,mismatch
 		
 		# some expressions to process bounds for a dimension

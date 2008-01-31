@@ -55,6 +55,7 @@ lib.buildMappingTables.restype = POINTER(c_void)
 lib.doComparison.argtypes=[POINTER(c_void), POINTER(c_char), POINTER(c_char), c_int, c_int, c_int, c_int, POINTER(c_char)]
 lib.DotStoreToBuffer.restype = POINTER(c_int)
 lib.DotStoreFromBuffer.argtypes = [ POINTER(c_void), POINTER(c_int) ]
+lib.NewDotStore.restype=POINTER(c_void)
 lib.DotStoreGetMaxX.restype=c_int
 lib.DotStoreGetMaxY.restype=c_int
 lib.DotStoreSetMaxX.argtypes=[c_void_p,c_int]
