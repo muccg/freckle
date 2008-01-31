@@ -23,7 +23,7 @@ defminmatch=12
 defmismatch=0
 
 # version
-versionstring="0.5"
+versionstring="0.5.1"
 
 # algorithm defines
 LBDOT=0				#the default
