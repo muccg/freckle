@@ -126,6 +126,7 @@ class DotPlot:
 		if window<ktup:
 			window=ktup
 		self.ktup, self.window, self.minmatch, self.mismatch = ktup,window,minmatch,mismatch
+		print "Ktuple-size:%d  Window:%d  Minimum-match:%d  Mismatch:%d"%(ktup,window,minmatch,mismatch)
 		
 		# some expressions to process bounds for a dimension
 		self.ProcStart = lambda st: ((st==None) and [0] or [st])[0]

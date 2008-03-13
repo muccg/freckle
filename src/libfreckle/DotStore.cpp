@@ -172,6 +172,17 @@ void DotStore::CreateIndex()
 	if(index)
 		DestroyIndex();
 
+	if(numdots==0)
+	{
+		// we are an empy dotstore.
+		// this is a bit of a problem because we don't know how big the sequence is. 
+		// for now, we set maxx and maxy to 1 and 1
+		// this shouldn't be a problem because we have not dots, so none will be added
+		// really what we should do is use the input total sequence lengths here
+		maxx=1;
+		maxy=1;
+	}
+
 	// create a new index
 	index=new QuadTree(0,0,maxx,maxy);
 

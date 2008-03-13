@@ -48,8 +48,18 @@ unsigned char *DotGrid::ToString() const
 // 	for(int i=0; i<GetMax()+1;i++)
 // 		printf("%d => %d\n",i,histogram[i]);
 
-	for(int pos=0; pos<width*height; pos++)
-		out[pos]=(unsigned char)(255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels));
+	if(GetMax()==0)
+	{
+		// no dots. we would be normalised to be a black square. Lets make this a white square.
+		// TODO: replace this with a histogram algo that works in corner cases too
+		for(int pos=0; pos<width*height; pos++)
+			out[pos]=(unsigned char)255;
+	}
+	else
+	{
+		for(int pos=0; pos<width*height; pos++)
+			out[pos]=(unsigned char)(255.-255.*(double)numpixels*((double)histogram[data[pos]]-(double)histogram[0])/(((double)numpixels-(double)histogram[0])*(double)numpixels));
+	}
 
 	// free histogram
 	delete histogram;
