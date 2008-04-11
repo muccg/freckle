@@ -771,6 +771,52 @@ class DotPlot:
 
 class LBDotPlot(DotPlot):
 	"""Overrides the standard DotPlot class and replaces dot plot calculation with lbdot calculator"""
+	
+	def CreateTables(self, dimension=0, start=None, end=None):
+		pass
+	
+	def CalculateDotStore(self, dimension=1, start=None, end=None, compstart=None, compend=None ):
+		"""
+		\brief performs the calculation of the dot plot for the entire sequences
+		\details Calls the underlying libfreckle C code to calculate the dot plot for the entire sequence
+		\warning can be slow with large sequences. 500000 vs 500000 can take a few hours to compute on 3 gigs of 32bit CPU
+		\param dimension Which dimension to calculate the dotstore for (other dimension must be indexed)
+		\param start the starting index number
+		\param end the ending index number
+		\todo make this method able to calculate sub dot plots.
+		\todo implement ktuple size, window and mismatch
+		\return (forward dotstore, reverse dotstore)
+		"""
+		assert(self.minmatch>=self.ktup)
+		assert(self.ktup>=4)
+		assert(self.window>=self.ktup)
+		assert(dimension==0 or dimension==1)
+		
+		start=self.ProcStart(start)
+		end=self.ProcEnd(dimension,end)
+		compstart=self.ProcStart(compstart)
+		compend=self.ProcEnd(1-dimension,compend)
+		
+		# assemble our comparison sequence
+		compseq=decodeseq(self.GetSubSequence(dimension,start,end))
+		tableseq=decodeseq(self.GetSubSequence((dimension==0) and 1 or 0,start,end))
+		
+		# make a dotstore for this region
+		dotstore,revdotstore=self.Compare(None, tableseq, compseq, self.ktup, self.window, self.mismatch, self.minmatch)
+		self.dotstore[ (dimension,start,end,compstart,compend) ] = (dotstore, revdotstore)
+				
+		# make sure the dotstore sizes are the same (and maximal)
+		maxx=max(dotstore.GetMaxX(), revdotstore.GetMaxX())
+		maxy=max(dotstore.GetMaxY(), revdotstore.GetMaxY())
+		
+		dotstore.SetMaxX(maxx)
+		dotstore.SetMaxY(maxy)
+		revdotstore.SetMaxX(maxx)
+		revdotstore.SetMaxY(maxy)
+		
+		
+		return (dotstore, revdotstore)
+	
 	def Compare(self,table,tableseq,compseq,ktup,window,mismatch,minmatch):
 		return doFastComparison(tableseq,compseq,ktup,window,mismatch,minmatch)
 

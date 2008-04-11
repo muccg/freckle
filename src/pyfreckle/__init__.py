@@ -65,6 +65,10 @@ lib.DotGridToString.restype=POINTER(c_void)
 lib.NewDotGrid.argtypes=[]
 lib.NewDotGrid.restype=POINTER(c_void)
 
+class c_pointers(Structure):
+	_fields_ = [ ('forward', POINTER(c_void)),('reverse',POINTER(c_void))]
+
+lib.DoFastComparison.restype=POINTER(c_pointers)
 
 # now our base library functions
 #def buildMappingTables( sequence, ktuplesize ):
@@ -81,6 +85,7 @@ def doComparison(tables, tabseq, newseq, ktup, window, mismatch, minmatch, bases
 	return DotStore(lib.doComparison(tables,tabseq,newseq,ktup,window,mismatch,minmatch,bases))
 	
 def doFastComparison(seq1, seq2, ktuplesize=4, window=10, mismatch=0, minmatch=4):
-	return DotStore(lib.DoFastComparison(seq1,seq2,len(seq1),len(seq2),window,mismatch,0,ktuplesize))
+	results=lib.DoFastComparison(seq1,seq2,len(seq1),len(seq2),window,mismatch,0,ktuplesize)
+	return DotStore(results.contents.forward),DotStore(results.contents.reverse)
 
 	

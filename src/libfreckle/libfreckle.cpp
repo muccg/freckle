@@ -562,7 +562,7 @@ char *RCseq(char *a)
 }
 
 // This is the obfuscated lbdot original
-DotStore *DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2, int CompWind,int CompMism, int nMaxRepeatKtup, int nMaxDNAKtup)
+DotStore **DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2, int CompWind,int CompMism, int nMaxRepeatKtup, int nMaxDNAKtup)
 {
 // printf("initcodetables, %d, %d, %d, %d (%d,%d)\n",CompWind, CompMism, nMaxRepeatKtup, nMaxDNAKtup,SeqLen1,SeqLen2);
 // 
@@ -581,6 +581,8 @@ DotStore *DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2, int
 // 	if(*c != 'A' && *c != 'C' && *c != 'G' && *c != 'T')
 // 		printf("%c",*c);
 // printf("\n\n");
+
+DotStore **result=new DotStore *[2];
 
 Init_code_tables();
 
@@ -853,11 +855,15 @@ int *cd=new int [Length1+2];
 
 	if(Seq1==Seq2)delete s2;
 
-	delete MinusDotArray;
+// 	delete MinusDotArray;
 	
 	PlusDotArray->Interpolate(CompWind);
+	MinusDotArray->Interpolate(CompWind);
 
-	return PlusDotArray;
+// 	return PlusDotArray;
+	result[0]=PlusDotArray;
+	result[1]=MinusDotArray;
+	return result;
 /*
 	return CompKtup;*/
 };

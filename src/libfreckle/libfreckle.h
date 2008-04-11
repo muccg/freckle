@@ -53,7 +53,7 @@ int EncodeNTSeqConditional(const char *seq, int p1, int p2, int *c,int *d,int *c
 int GetNtCode(const char *seq, int ktup, int intval, const int *v);
 void ComplementSeq(char  *a);
 char *RCseq(char *a);
-DotStore *DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,
+DotStore **DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,
 						   int CompWind,int CompMism, int nMaxRepeatKtup, int nMaxDNAKtup);
 
 // helper functions
