@@ -169,19 +169,19 @@ void DotStore::Dump()
 void DotStore::CreateIndex()
 {
 // 	Dump();
-	
-	printf("DotStore::CreateIndex() %d %d\n",maxx,maxy);
+// 	
+// 	printf("DotStore::CreateIndex() %d %d\n",maxx,maxy);
 
 	// if there is an old index destroy it
 	if(index)
 	{
-		printf("destroying old index\n");
+// 		printf("destroying old index\n");
 		DestroyIndex();
 	}
 
 	if(numdots==0)
 	{
-		printf("numdots==0\n");
+// 		printf("numdots==0\n");
 		// we are an empy dotstore.
 		// this is a bit of a problem because we don't know how big the sequence is. 
 		// for now, we set maxx and maxy to 1 and 1
@@ -192,11 +192,11 @@ void DotStore::CreateIndex()
 	}
 
 	// create a new index
-	printf("creating quadtree\n");
+// 	printf("creating quadtree\n");
 	index=new QuadTree(0,0,maxx,maxy);
 
 	// go through every dot
-	printf("adding dots: %d\n",numdots);
+// 	printf("adding dots: %d\n",numdots);
 	for(int i=0; i<numdots; i++)
 	{
 		index->AddDot(GetDot(i));

@@ -273,7 +273,7 @@ public:
 
 		fclose(input);
 
-		printf("%d dots read\n",count);
+// 		printf("%d dots read\n",count);
 
 		// create index
 		store.CreateIndex();
