@@ -204,6 +204,7 @@ public:
 
 		delete ds2;
 		delete buffer;
+// 		delete ds;
 	}
 
 	#define RANDINT(max) (rand()%max)
@@ -244,6 +245,38 @@ public:
 		}
 		
 		delete ds;
+	}
+
+	// data must be in i,x,y,len columns, whitespace delimited
+	#define DATASET		"segfaultdata.txt"
+
+	void testLargeDataIndexSegfault(void)
+	{
+		// load our dataset
+		FILE *input=NULL;
+		input=fopen(DATASET, "r");
+		TS_ASSERT(input!=NULL);
+
+		// place to storethe dots
+		DotStore store;
+
+		// count the lines
+		int i,x,y,len;
+		int count=0;
+		while(fscanf(input,"%d %d %d %d",&i,&x,&y,&len)!=EOF)
+		{
+			// store in dotstore
+			store.AddDot(x,y,len);
+
+			count++;
+		}
+
+		fclose(input);
+
+		printf("%d dots read\n",count);
+
+		// create index
+		store.CreateIndex();
 	}
 };
 

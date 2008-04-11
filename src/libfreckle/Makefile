@@ -1,11 +1,16 @@
 CPP=g++
 CC=gcc
-# CPPFLAGS=-fPIC -Wall -g -pg
-# LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
+
+# debug
+CPPFLAGS=-fPIC -Wall -g -pg
+LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
+
 #CPPFLAGS=-fPIC -Wall -march=opteron
 ARCH = opteron
-CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
-LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
+
+# not debug
+# CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
+# LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 
@@ -71,7 +76,7 @@ testDotStore.cpp: testDotStore.h DotStore.cpp DotStore.h
 
 testDotStore: testDotStore.cpp DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
 	$(CPP) $(CPPFLAGS) -I./ -o testDotStore testDotStore.cpp DotStore.o DotStorageChunk.o QuadTree.o QuadTreeNode.o
-	./testDotStore
+# 	./testDotStore
 
 testDotGrid.cpp: testDotGrid.h DotGrid.cpp DotGrid.h
 	./cxxtestgen.pl --error-printer -o testDotGrid.cpp testDotGrid.h

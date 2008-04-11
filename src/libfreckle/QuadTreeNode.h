@@ -18,7 +18,7 @@ typedef int Type;
 #define QTLEAF	0
 #define QTNODE	1
 
-#define NUMDOTS 4
+#define NUMDOTS 16
 
 
 class QuadTreeNode
@@ -27,7 +27,7 @@ private:
 	union
 	{
 		QuadTreeNode	*child[4];				// if we are a node
-		Dot		*dot[NUMDOTS];					// if we are a leaf, and could contain up to 4 dots
+		Dot		*dot[NUMDOTS];				// if we are a leaf, and could contain up to 4 dots
 	} store;
 
 	Type		x,y;						// the centre point of the split (for non uniform splitting)

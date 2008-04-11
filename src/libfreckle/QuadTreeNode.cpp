@@ -4,7 +4,16 @@
 QuadTreeNode::QuadTreeNode()
 {
 	// zero everything
-	memset(this, 0, sizeof(QuadTreeNode));
+	for(int i=0; i<NUMDOTS;i++)
+		store.dot[i]=NULL;
+
+	x=0;
+	y=0;
+
+	x1=0;
+	x2=0;
+	y1=0;
+	y2=0;
 	type=QTNODE;
 }
 
@@ -33,7 +42,12 @@ QuadTreeNode::QuadTreeNode(Type xp, Type yp, Type xp1, Type yp1, Type xp2, Type 
 QuadTreeNode::QuadTreeNode(Type xp1, Type yp1, Type xp2, Type yp2)
 {
 	// zero everything
-	memset(this, 0, sizeof(QuadTreeNode));
+// 	memset(this, 0, sizeof(QuadTreeNode));
+	for(int i=0; i<NUMDOTS;i++)
+		store.dot[i]=NULL;
+
+	x=0;
+	y=0;
 
 	x1=xp1;
 	x2=xp2;
@@ -99,6 +113,21 @@ void QuadTreeNode::AddDot(Dot *dt)
 		
 		// cant fit in this leaf. Lets turn the leaf to a node and then try re-adding it
 		LeafToNode();
+
+		// if all the dots were asembled into a single child leaf, then we are entering a recursive infinite split.
+		// this occurs if we are trying to store too many same dots into a full bucket. eg. dots (1,2),(1,2),(1,2),(1,2),(1,2) and NUMDOTS=4
+		// to test this we assert that we have less than 3 zero pointers in the NW,NE,SW,SE children.
+		// this test is only performed if the size of our leaf/node is very small (2x2)
+		if(x2-x1<=2 && y2-y1<=2)
+			assert(
+				(
+				((store.child[NW]==NULL) && 1)+
+				((store.child[NE]==NULL) && 1)+
+				((store.child[SW]==NULL) && 1)+
+				((store.child[SE]==NULL) && 1) 
+				)	< (NUMDOTS-1) 
+			);
+
 		AddDot(dt);	
 	}
 
@@ -107,18 +136,22 @@ void QuadTreeNode::AddDot(Dot *dt)
 // Turn this leaf into a node and reclassify the contents
 void QuadTreeNode::LeafToNode()
 {
+	int i=0;
+
 	assert(isLeaf());
 
 	// save the dots
 	Dot *dotstore[NUMDOTS];
-	for(int i=0; i<NUMDOTS; i++)
+	for(i=0; i<NUMDOTS; i++)
 		dotstore[i]=store.dot[i];
 	
 	// now change to a node and subdivide
 	MakeNode((x2-x1)/2+x1, (y2-y1)/2+y1);
 
-	for(int i=0; i<NUMDOTS; i++)
+	for(i=0; i<NUMDOTS; i++)
+	{
 		AddDot(dotstore[i]);
+	}
 	
 }
 
