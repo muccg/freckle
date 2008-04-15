@@ -384,7 +384,7 @@ class DotPlot:
 		
 		return grid[0]
 		
-	def MakeImage(self, storekey=None,major=None,minor=None):
+	def MakeImage(self, storekey=None,major=None,minor=None,seqbound=(0,0,255),filebound=(255,0,0),alpha=24):
 		"""
 		\brief Makes a DotPlot image from the averaged grid data
 		"""
@@ -394,12 +394,12 @@ class DotPlot:
 		string=self.grid[storekey].ToString()
 		image=Image.fromstring("L", (self.grid[storekey].GetWidth(),self.grid[storekey].GetHeight()), string).convert("RGB")
 		
-		self.DrawBounds(image,storekey[3],storekey[1],storekey[4],storekey[2])
-		image=self.AddAxis(image,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor)
+		self.DrawBounds(image,storekey[3],storekey[1],storekey[4],storekey[2], seqbound=tuple(list(seqbound)+[alpha]),filebound=tuple(list(seqbound)+[alpha]))
+		image=self.AddAxis(image,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor,seqbound=seqbound,filebound=filebound)
 		
 		return image
 	
-	def AddAxis(self,image,x1,y1,x2,y2,major=None,minor=None):
+	def AddAxis(self,image,x1,y1,x2,y2,major=None,minor=None, seqbound=(0,0,255), filebound=(255,0,0)):
 		"""
 		\brief add the image if an axis and sequence annotations to the dotplot image
 		\detail takes the graph image and creates a new image with axis and annotations. the new image will be larger than the old
@@ -559,7 +559,7 @@ class DotPlot:
 				textw,texth=idfont.getsize(ids)
 				x=aisize[0]-XOFF-idymaxlen-fileymaxlen-SIDEGUTTER-SIDEGUTTER/2
 				y=YOFF+titleheight+TITLEGAP+ticklength+axistextheight+idy-texth/2
-				dc.text( (x,y), ids, fill=(0,0,255,255), font=idfont)
+				dc.text( (x,y), ids, fill=tuple(list(seqbound)+[255]), font=idfont)
 				
 				seqyoff+=1
 		
@@ -575,13 +575,13 @@ class DotPlot:
 			x=aisize[0]-XOFF-fileymaxlen
 			tops=YOFF+titleheight+TITLEGAP+ticklength+axistextheight
 			y=tops+idy-fnameh/2
-			dc.text( (x,y), file, fill=(255,0,0,255), font=font)
+			dc.text( (x,y), file, fill=tuple(list(filebound)+[255]), font=font)
 			
 			# draw the lines
-			dc.line( [ (aisize[0]-XOFF-fileymaxlen-SIDEGUTTER, fbounds[fyoff-1]+tops+1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff-1]+tops+1) ], fill=(255,0,0,128) )
-			dc.line( [ (aisize[0]-XOFF-fileymaxlen-SIDEGUTTER, fbounds[fyoff]+tops-1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff]+tops-1) ], fill=(255,0,0,128) )
-			dc.line( [ (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff-1]+tops+1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff]+tops-1)], fill=(255,0,0,128))
-			dc.line( [ (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3,y+fnameh/2),(aisize[0]-XOFF-fileymaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=(255,0,0,128))
+			dc.line( [ (aisize[0]-XOFF-fileymaxlen-SIDEGUTTER, fbounds[fyoff-1]+tops+1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff-1]+tops+1) ], fill=tuple(list(filebound)+[128]) )
+			dc.line( [ (aisize[0]-XOFF-fileymaxlen-SIDEGUTTER, fbounds[fyoff]+tops-1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff]+tops-1) ], fill=tuple(list(filebound)+[128]) )
+			dc.line( [ (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff-1]+tops+1), (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3, fbounds[fyoff]+tops-1)], fill=tuple(list(filebound)+[128]))
+			dc.line( [ (aisize[0]-XOFF-fileymaxlen-2*SIDEGUTTER/3,y+fnameh/2),(aisize[0]-XOFF-fileymaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=tuple(list(filebound)+[128]))
 			
 			fyoff+=1
 		
@@ -607,7 +607,7 @@ class DotPlot:
 				
 				textw,texth=idfont.getsize(ids)
 				y=bottomimagesize[1]-idx-texth/2
-				dc.text( (0,y), ids, fill=(0,0,255,255), font=idfont)
+				dc.text( (0,y), ids, fill=tuple(list(seqbound)+[255]), font=idfont)
 				
 				seqxoff+=1
 		
@@ -623,13 +623,13 @@ class DotPlot:
 			x=bottomimagesize[0]-filexmaxlen
 			tops=0
 			y=bottomimagesize[1]-tops-idy-fnameh/2
-			dc.text( (x,y), file, fill=(255,0,0,255), font=font)
+			dc.text( (x,y), file, fill=tuple(list(filebound)+[255]), font=font)
 			
 			# draw the lines
-			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)) ], fill=(255,0,0,128) )
-			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff]+tops-1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1)) ], fill=(255,0,0,128) )
-			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1))], fill=(255,0,0,128))
-			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3,(y+fnameh/2)),(bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=(255,0,0,128))
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)) ], fill=tuple(list(filebound)+[128]) )
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER, bottomimagesize[1]-(fbounds[fyoff]+tops-1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1)) ], fill=tuple(list(filebound)+[128]) )
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff-1]+tops+1)), (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3, bottomimagesize[1]-(fbounds[fyoff]+tops-1))], fill=tuple(list(filebound)+[128]))
+			dc.line( [ (bottomimagesize[0]-YOFF-filexmaxlen-2*SIDEGUTTER/3,(y+fnameh/2)),(bottomimagesize[0]-YOFF-filexmaxlen-SIDEGUTTER/3,y+fnameh/2)],fill=tuple(list(filebound)+[128]))
 			
 			fyoff+=1
 		
@@ -699,6 +699,8 @@ class DotPlot:
 		# preprocess start and end
 		start = self.ProcStart(start)
 		end = self.ProcEnd(dimension,end)
+		
+		#print start,end,self.size,dimension
 		
 		assert(start>=0)
 		assert(start<=self.size[dimension])
@@ -799,7 +801,7 @@ class LBDotPlot(DotPlot):
 		
 		# assemble our comparison sequence
 		compseq=decodeseq(self.GetSubSequence(dimension,start,end))
-		tableseq=decodeseq(self.GetSubSequence((dimension==0) and 1 or 0,start,end))
+		tableseq=decodeseq(self.GetSubSequence(1-dimension,compstart,compend))
 		
 		# make a dotstore for this region
 		dotstore,revdotstore=self.Compare(None, tableseq, compseq, self.ktup, self.window, self.mismatch, self.minmatch)
@@ -808,6 +810,8 @@ class LBDotPlot(DotPlot):
 		# make sure the dotstore sizes are the same (and maximal)
 		maxx=max(dotstore.GetMaxX(), revdotstore.GetMaxX())
 		maxy=max(dotstore.GetMaxY(), revdotstore.GetMaxY())
+		
+		#print maxx, maxy
 		
 		dotstore.SetMaxX(maxx)
 		dotstore.SetMaxY(maxy)
