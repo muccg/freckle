@@ -2,19 +2,19 @@ CPP=g++
 CC=gcc
 
 # debug
-CPPFLAGS=-fPIC -Wall -g -pg
-LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
+# CPPFLAGS=-fPIC -Wall -g -pg
+# LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 
 #CPPFLAGS=-fPIC -Wall -march=opteron
 ARCH = opteron
 
 # not debug
-# CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
-# LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
+CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
+LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 
-INSTALLVERSION=0.1
+INSTALLVERSION=0.2
 TARGET=/usr/local/lib
 HEADERTARGET=/usr/local/include
 
@@ -22,6 +22,7 @@ all: libfreckle.so
 
 install: libfreckle.so
 	-cp libfreckle.so $(TARGET)/libfreckle.so.$(INSTALLVERSION)
+	-rm $(TARGET)/libfreckle.so
 	-ln -s $(TARGET)/libfreckle.so.$(INSTALLVERSION) $(TARGET)/libfreckle.so
 	-cp libfreckle.h $(HEADERTARGET)/
 	-ldconfig
