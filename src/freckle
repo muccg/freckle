@@ -49,8 +49,8 @@ def usage():
 	print "-T\t--minor=\toverride the automatic minor tick seperation with this value"
 	print "-F\t--filter=\tfilter the dotplot to only include matches at least this long"
 	print "-f\t--fine\tuse the slower finer algorithm to generate the dotplot. Works with lower ktuple and match sizes but takes significantly longer."
-	print "-c\t--colour=\tspecify the colour to use for the sequence divisions."
-	print "-b\t--bound=\tspecify the colour to use for file bound division lines."
+	print "-c\t--colour=\tspecify the colour to use for the sequence divisions. Specify as a word or a quoted hex colour string."
+	print "-b\t--bound=\tspecify the colour to use for file bound division lines. Specify as a word or a quoted hex colour string."
 	print "-a\t--alpha=\tspecify the value of alpha to use on drawing bounds. Value between 0 and 255. [Default: %d]"%defalpha
 	print "-v\t--version\tdisplay version information"
 	print
@@ -68,8 +68,8 @@ def usage():
 	print "load a previous dotplot and filter out all the matches less than 20 in length. Save the new dotplot."
 	print " %s -L sequence.dotplot -F 20 -S sequence_majors.dotplot"%sys.argv[0]
 	print
-	print "load a previous dotplot and filter out all the matches less than 30 in length. Draw the resulting image as a graph. Save the output aswell"
-	print " %s -L sequence.dotplot -F 30 -s 2048 -o image.png -S sequence_over30.dotplot"%sys.argv[0]
+	print "load a previous dotplot and filter out all the matches less than 30 in length. Draw the resulting image as a graph. Use non standard colours. Save the output aswell"
+	print " %s -L sequence.dotplot -F 30 -s 2048 -c red -b \"#008000\" -a 64 -o image.png -S sequence_over30.dotplot"%sys.argv[0]
 	
 def version():
 	print "Freckle dot plotter version "+versionstring
