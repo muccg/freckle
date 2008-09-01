@@ -12,6 +12,9 @@ class DotStore:
 			self.dotstore=dotstore
 			
 		self.lib.DotStoreGetDot.restype=POINTER(Dot)
+		self.lib.DotStoreGetIndexLongestMatchingRowDot.restype=POINTER(Dot)
+		self.lib.DotStoreGetIndexLongestMatchingColumnDot.restype=POINTER(Dot)
+		
 		
 	def __del__(self):
 		assert(self.dotstore)
@@ -27,6 +30,9 @@ class DotStore:
 		else:
 			return self.GetDot(item)
 	
+	def AddDot(self,x,y,length):
+		self.lib.DotStoreAddDot(self.dotstore, x, y, length);
+	
 	def SetMaxX(self,x):
 		self.lib.DotStoreSetMaxX(self.dotstore, x)
 		
@@ -39,8 +45,21 @@ class DotStore:
 	def GetMaxY(self):
 		return self.lib.DotStoreGetMaxY(self.dotstore)
 		
+	def Interpolate(self, window):
+		assert type(window)==int
+		self.lib.DotStoreInterpolate(self.dotstore, window)
 	
+	def GetIndexLongestMatchingRowDot(self,y):
+		dot = self.lib.DotStoreGetIndexLongestMatchingRowDot(self.dotstore,y)
+		if not bool(dot):
+			return None
+		return dot.contents
 	
+	def GetIndexLongestMatchingColumnDot(self,x):
+		dot = self.lib.DotStoreGetIndexLongestMatchingColumnDot(self.dotstore,x).contents
+		if not bool(dot):
+			return None
+		return dot.contents
 	
 	def GetDot(self, index):
 		if index<0:

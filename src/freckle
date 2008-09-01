@@ -24,7 +24,7 @@ defmismatch=0
 defalpha=24
 
 # version
-versionstring="0.6"
+versionstring="0.7"
 
 # algorithm defines
 LBDOT=0				#the default
@@ -37,6 +37,7 @@ def usage():
 	print "-h\t--help\t\tthis helpful blurb"
 	print "-x\t--xfile=\ta FASTA file for a sequence to be displayed on the x axis"
 	print "-y\t--yfile=\ta FASTA file for a sequence to be displayed on the y axis"
+	print "-C\t--conserved=\tspecify a fasta file to compare and mark conserved regions on the plot"
 	print "-o\t--output=\tthe image file to write the output to."
 	print "-s\t--size=\t\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger. [Default: %d]"%defimagesize
 	print "-k\t--ktup=\t\tktuple size for tokenisation. [Default: %d]"%defktup
@@ -58,6 +59,9 @@ def usage():
 	print
 	print "calculate a dotplot for seq 1,2 and 3 vs seq 4 and 5. Output this to graph.png."
 	print " %s -x seq1.fasta -x seq2.fasta -x seq3.fasta -y seq4.fasta -y seq5.fasta -o graph.png -s 1024"%sys.argv[0]
+	print
+	print "draw a dotplot and show conserved regions with two other sequences. save as conserved.png"
+	print " %s -x seq1.fasta -y seq2.fasta -C seq3.fasta -C seq4.fasta -o conserved.png -s 1024"%sys.argv[0]
 	print
 	print "calculate a dotplot for a sequence versus itself. Save the outcome in a dotplot file for later rendering."
 	print " %s -x sequence.fasta -y sequence.fasta -S sequence.dotplot"%sys.argv[0]
@@ -82,6 +86,7 @@ def parseopts():
 	# default parameters
 	xseq=[]
 	yseq=[]
+	conserved=[]
 	outfile=None
 	imagesize=defimagesize
 	ktup=defktup
@@ -99,8 +104,8 @@ def parseopts():
 	algo=LBDOT
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:vfc:b:a:"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version","fine","colour=","bounds=","alpha="]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:vfc:b:a:C:"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version","fine","colour=","bounds=","alpha=","conserved="]
 	
 	if len(sys.argv[1:])==0:
 		usage()
@@ -127,6 +132,9 @@ def parseopts():
 			
 		elif o in ("-y","--yfile"):
 			yseq.append(a)
+
+		elif o in ("-C","--conserved"):
+			conserved.append(a)
 			
 		elif o in ("-o","--output"):
 			outfile=a
@@ -202,7 +210,7 @@ def parseopts():
 		print "ERROR: mismatch size must be at less than window size, otherwise everything is a dot."
 		sys.exit(7)
 				
-	return xseq, yseq, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound, filebound, alpha
+	return xseq, yseq, conserved, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound, filebound, alpha
 	
 def parsecolour(colourstring):
 	import string
@@ -228,11 +236,12 @@ def parsecolour(colourstring):
 		
 
 def main():
-	xseqfiles,yseqfiles,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound,filebound,alpha=parseopts()
+	xseqfiles,yseqfiles,conserved,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound,filebound,alpha=parseopts()
 	
 	if DEBUG:
 		print "xsequences:",xseqfiles
 		print "ysequences:",yseqfiles
+		print "conserved:",conserved
 		print "outfile:",outfile
 		print "imagesize",imagesize
 		print "ktuple",ktup
@@ -269,6 +278,34 @@ def main():
 		t=time()
 		plot.CalculateDotStore()
 		print "done in",time()-t,"seconds"
+
+	if conserved:
+		print "Calculating conserved regions in third sequence..."
+		t=time()
+		
+		# we have some sequences to mark conserved regions from
+		plot.CreateConservedStore()
+		
+		print "..."
+		
+		# TODO: handle more than one
+		plot.ProcessConservedRegions(conserved[0])
+
+		print "done in",time()-t,"seconds"
+
+		#sys.exit()
+		#assert(dimension==0 or dimension==1)
+		
+		#start=self.ProcStart(start)
+		#end=self.ProcEnd(dimension,end)
+		
+		## munge anything thats not 'ACGT' into a '.'
+		#subseq=decodeseq(self.GetSubSequence(dimension,start,end))
+		
+		#table=(start,end,subseq,buildMappingTables(subseq, self.ktup))
+		#self.tables[dimension][(start,end)]=table
+		
+		#return table
 	
 	#do we filter this?
 	if filt!=None:
@@ -299,23 +336,58 @@ def main():
 	youtput=float(ysize)/scale
 	
 	if outfile!=None:
+		plot.Interpolate()
 		
 		print "Indexing dotplot..."
 		t=time()
 		plot.IndexDotStores()
 		print "done in",time()-t,"seconds"
 		
+		print plot.dotstore
+		for key in plot.dotstore:
+			print key,":",plot.dotstore[key],"=>",len(plot.dotstore[key][0]),len(plot.dotstore[key][1])
+		
 		print "Calculating averaged grid..."
 		t=time()
 		plot.MakeAverageGrid(scale)
 		print "done in",time()-t,"seconds"
 		
+		if conserved:
+			print "Calculating conserved grid..."
+			t=time()
+			plot.MakeAverageGrid(scale, conserved=True)
+			print "done in",time()-t,"seconds"
+		
 		print "Rendering image..."
 		t=time()
-		image=plot.MakeImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha)
+		image=plot.MakeImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, invert=True)
 		print "done in",time()-t,"seconds"
 		
-		image.save(outfile)
+		if conserved:
+			print "Rendering conserved image..."
+			t=time()
+			cimage=plot.MakeImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, conserved=True, invert=True)
+			print "done in",time()-t,"seconds"
+		
+		from PIL import ImageChops, ImageOps
+		
+		COLOUR=(255,0,0)
+		
+		colourised = ImageOps.colorize(cimage, (255,255,255), tuple([255-COLOUR[i] for i in (0,1,2)]))
+		image = image.convert("RGB")
+		
+		out = ImageChops.multiply( colourised, image )
+		
+		out=ImageChops.invert(out)
+		
+		print "Compiling image..."
+		t=time()
+		image2=plot.CompileImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, dotimage=image, conservedimage=cimage)
+		print "done in",time()-t,"seconds"
+		
+		#cimage.
+		
+		image2.save(outfile)
 		
 	sys.exit(0)
 

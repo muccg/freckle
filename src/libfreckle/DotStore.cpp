@@ -170,7 +170,7 @@ void DotStore::CreateIndex()
 {
 // 	Dump();
 // 	
-// 	printf("DotStore::CreateIndex() %d %d\n",maxx,maxy);
+	//printf("DotStore::CreateIndex() %d %d %d\n",maxx,maxy,numdots);
 
 	// if there is an old index destroy it
 	if(index)
@@ -190,6 +190,13 @@ void DotStore::CreateIndex()
 		maxx=1;
 		maxy=1;
 	}
+
+	// try to fix conserved region crash?
+	if(maxx==0)
+		maxx=1;
+
+	if(maxy==0)
+		maxy=1;
 
 	// create a new index
 // 	printf("creating quadtree\n");
@@ -231,7 +238,10 @@ Dot *DotStore::GetIndexDot(int x,int y)
 	assert(result->Length()==1 || result->Length()==0);
 
 	if(result->Length()==0)
+	{
+		delete result;
 		return NULL;
+	}
 
 	Dot *dot=result->Pop();
 
@@ -241,6 +251,59 @@ Dot *DotStore::GetIndexDot(int x,int y)
 	return dot;
 }
 
+// use the index to quickly find the longest dot match on a particular row
+Dot *DotStore::GetIndexLongestMatchingRowDot(int y)
+{
+	assert(index);				//we must be indexed
+
+	printf("Doing spatial query on %ld (%d,%d,%d,%d)\n",(long)index,0,y,maxx,y);
+	LinkedListVal<Dot *> *result = index->SpatialQuery(0,y,maxx,y);
+	
+	// find out which dot matched is the longest
+	Dot *longest=NULL;
+	int maxlength=0;
+	int dotlength=0;
+	for( LinkedListVal<Dot *>::Iterator i(*result); !i.Done(); i++)
+	{
+		dotlength = (*i)->length;
+
+		if(dotlength>maxlength)
+		{
+			maxlength=dotlength;
+			longest=(*i);
+		}
+	}
+
+	delete result;
+	return longest;
+}
+
+// use the index to quickly find the longest dot match on a particular column
+Dot *DotStore::GetIndexLongestMatchingColumnDot(int x)
+{
+	assert(index);				//we must be indexed
+
+	LinkedListVal<Dot *> *result = index->SpatialQuery(x,0,x,maxy);
+	
+	// find out which dot matched is the longest
+	Dot *longest=NULL;
+	int maxlength=0;
+	int dotlength=0;
+	for( LinkedListVal<Dot *>::Iterator i(*result); !i.Done(); i++)
+	{
+		dotlength = (*i)->length;
+
+		if(dotlength>maxlength)
+		{
+			maxlength=dotlength;
+			longest=(*i);
+		}
+	}
+
+	delete result;
+	return longest;
+}
+
 int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int window)
 {
 	assert(index);				// we must be indexed
@@ -248,6 +311,8 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 	//assert(x2-x1 == y2-y1);			// we must be square. TODO: add support for rectangular area
 
 	double dwindow=(double)window;
+
+	printf("DotStore::CountAreaMatches(): %d\n",numdots);
 
 	int count=0;
 
@@ -444,6 +509,9 @@ void DotStore::Interpolate(int window)
 
 	Dot *dot=NULL;
 
+	printf("PREInterpolate\n");
+	Dump();
+
 	for(int i=0; i<GetNum(); i++)
 	{
 		dot=GetDot(i);
@@ -473,4 +541,7 @@ void DotStore::Interpolate(int window)
 	}
 
 	delete extradots;
+
+	printf("POSTInterpolate\n");
+	Dump();
 }

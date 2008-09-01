@@ -129,6 +129,10 @@ public:
 	// index access functions
 	Dot *GetIndexDot(int x, int y);
 
+	// Get the longest matching dot from a row or column (used for calculating conserved regions in other sequences)
+	Dot *GetIndexLongestMatchingRowDot(int y);
+	Dot *GetIndexLongestMatchingColumnDot(int x);
+
 	//
 	// \brief sum the amount of dots within the passed in window 
 	// 

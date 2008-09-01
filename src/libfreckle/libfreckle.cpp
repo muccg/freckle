@@ -80,7 +80,11 @@ TupleID getTupleID(const char *tuple, int len, const char *bases)
 	for(int i=0; i<len; i++, tuple++)
 	{
 		index=strchr(bases, (int)*tuple)-bases;			// get the index in Bases of where this character appears
-		assert(index>=0 && index<(int)strlen(bases));		// it should be within range
+		if(!(index>=0 && index<(int)strlen(bases)))		// it should be within range
+		{
+			printf("index=%d bases=%d char=%c\n",index,(int)strlen(bases),tuple);
+			assert(0);
+		}
 		assert((index & BASE_MASK(bases)) == index);			// it shouldn't have any extra bits
 		
 		id=id * BASE_PAIRS(bases);		// 
@@ -253,6 +257,8 @@ DotStore *doComparison(unsigned int **tables, const char *tablesequence, const c
 	assert(mismatch<=window);
 	assert(window>=ktuplesize);
 
+	printf("doComparison(): tableseq=%d newseq=%d bases=%d\n",strlen(tablesequence),strlen(newsequence),strlen(bases));
+
 	unsigned int *C, *D;
 	DotStore *dotstore=new DotStore();
 	C=tables[0];
@@ -266,6 +272,7 @@ DotStore *doComparison(unsigned int **tables, const char *tablesequence, const c
 	// go through each k-tuple on the newsequence
 	const char *tuple=newsequence;
 	int tupleid=0;
+	printf("%d\n",darraysize);
 	for(int i=0; i<darraysize; i++, tuple++)
 	{
 		// first we get the id of this tuple
@@ -857,8 +864,8 @@ int *cd=new int [Length1+2];
 
 // 	delete MinusDotArray;
 	
-	PlusDotArray->Interpolate(CompWind);
-	MinusDotArray->Interpolate(CompWind);
+	//PlusDotArray->Interpolate(CompWind);
+	//MinusDotArray->Interpolate(CompWind);
 
 // 	return PlusDotArray;
 	result[0]=PlusDotArray;
@@ -868,12 +875,12 @@ int *cd=new int [Length1+2];
 	return CompKtup;*/
 };
 
-
 /*
 ** helper functions for the higher level language to read the dotstore
 */
 DotStore *NewDotStore() { return new DotStore(); }
 void DelDotStore(DotStore *store) { delete store; } 
+void DotStoreAddDot(DotStore *store, int x, int y, int len) { store->AddDot(x,y,len); }
 int DotStoreGetDotX(DotStore *store, int index) { return store->GetDot(index)->x; }
 int DotStoreGetDotY(DotStore *store, int index) { return store->GetDot(index)->y; }
 int DotStoreGetDotLength(DotStore *store, int index) { return store->GetDot(index)->length; }
@@ -886,11 +893,16 @@ void DotStoreFromBuffer(DotStore *store, int *buffer) { store->FromBuffer(buffer
 int DotStoreBufferSize(DotStore *store, int *buffer) { return store->BufferSize(buffer); }
 void FreeIntBuffer(int *buffer) { assert(buffer); delete buffer; }
 DotStore *DotStoreFilter(DotStore *store, int minlen) { return store->Filter(minlen); } 
+void DotStoreInterpolate(DotStore *store, int window) { store->Interpolate(window); }
 
 void DotStoreSetMaxX(DotStore *store, int max) {store->SetMaxX(max);}
 void DotStoreSetMaxY(DotStore *store, int max) {store->SetMaxY(max);}
 int DotStoreGetMaxX(DotStore *store) {return store->GetMaxX();}
 int DotStoreGetMaxY(DotStore *store) {return store->GetMaxY();}
+
+// conservation helper functions
+Dot *DotStoreGetIndexLongestMatchingRowDot(DotStore *store, int x) { return store->GetIndexLongestMatchingRowDot(x); }
+Dot *DotStoreGetIndexLongestMatchingColumnDot(DotStore *store, int y) { return store->GetIndexLongestMatchingColumnDot(y); }
 
 /*
 ** helper function to interface with the dotgrid

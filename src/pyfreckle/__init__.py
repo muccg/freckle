@@ -86,6 +86,20 @@ def doComparison(tables, tabseq, newseq, ktup, window, mismatch, minmatch, bases
 	
 def doFastComparison(seq1, seq2, ktuplesize=4, window=10, mismatch=0, minmatch=4):
 	results=lib.DoFastComparison(seq1,seq2,len(seq1),len(seq2),window,mismatch,0,ktuplesize)
-	return DotStore(results.contents.forward),DotStore(results.contents.reverse)
+	forward,backward = DotStore(results.contents.forward),DotStore(results.contents.reverse)
+	return forward,backward
 
+def findLongestMatch(tables, sequence, 	compseq, ktup, window, mismatch, minmatch, bases=lib.Bases):
+	print "DoFastComparison..."
+	#dotstore = doComparison( tables, sequence, compseq, ktup, window, mismatch, minmatch, bases )
+	dotstore, backstore = doFastComparison( sequence, compseq, ktup, window, mismatch, minmatch )
+	print "done"
+
+	# search the dotstore for the longest 0 position match
+	dotstore.CreateIndex()
+	
+	dot=dotstore.GetIndexLongestMatchingRowDot(0)
+	if dot==None:
+		return None,None
+	return dot.x, dot.length
 	

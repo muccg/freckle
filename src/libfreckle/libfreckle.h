@@ -59,6 +59,7 @@ DotStore **DoFastComparison(char *Seq1, char *Seq2, int SeqLen1, int SeqLen2,
 // helper functions
 DotStore *NewDotStore();
 void DelDotStore(DotStore *store);
+void DotStoreAddDot(DotStore *store, int x, int y, int len);
 int DotStoreGetDotX(DotStore *store, int index);
 int DotStoreGetDotY(DotStore *store, int index);
 int DotStoreGetDotLength(DotStore *store, int index);
@@ -71,6 +72,7 @@ void DotStoreFromBuffer(DotStore *store, int *buffer);
 int DotStoreBufferSize(DotStore *store, int *buffer);
 void FreeIntBuffer(int *buffer);
 DotStore *DotStoreFilter(DotStore *store, int minlen);
+void DotStoreInterpolate(DotStore *store, int window);
 
 // maximums
 void DotStoreSetMaxX(DotStore *store, int max);
@@ -78,6 +80,9 @@ void DotStoreSetMaxY(DotStore *store, int max);
 int DotStoreGetMaxX(DotStore *store);
 int DotStoreGetMaxY(DotStore *store);
 
+// conservation helper functions
+Dot *DotStoreGetIndexLongestMatchingRowDot(DotStore *store, int x);
+Dot *DotStoreGetIndexLongestMatchingColumnDot(DotStore *store, int y);
 
 // DotGrid helper functions and wrappers
 DotGrid *NewDotGrid();

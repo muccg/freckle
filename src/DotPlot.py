@@ -2,7 +2,7 @@ from math import *
 from Bio import SeqIO
 from Bio.Seq import Seq
 from numpy import array, zeros, int32, vstack, hstack
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 from pyfreckle import *
 import os.path
 from time import time
@@ -143,6 +143,13 @@ class DotPlot:
 			
 		self.dotstore=newds
 		
+	def Interpolate(self):
+		"""Interpolate all the dot stores"""
+		for key in self.dotstore.keys():
+			print "Interpolating",key,self.window
+			self.dotstore[key][0].Interpolate(self.window)
+			self.dotstore[key][1].Interpolate(self.window)
+			
 		
 	def GetSequenceLength(self,dimension):
 		"""
@@ -185,7 +192,95 @@ class DotPlot:
 		self.tables[dimension][(start,end)]=table
 		
 		return table
-	
+
+	def CreateConservedStore(self, dimension=1):
+		"""
+		\brief setup the dotplot for conserved region plotting
+		\details creates a conserved region dotstore in which to accumulate the conserved areas with extra FASTA files
+		"""
+		assert len(self.dotstore), "There must be at least one dotstore already calculated for the dotplot prior to creating the conserved store"
+
+		store=self.conservedstore=[DotStore(),DotStore()]
+
+		for s in store:
+			s.SetMaxX(self.ProcEnd(dimension,None))
+			s.SetMaxY(self.ProcEnd(1-dimension,None))
+
+		self.seqstore=[str(self.AssembleFullSequence(dim)).upper() for dim in (0,1)]
+
+		return store
+
+	def ProcessConservedRegions(self, filename, dimension=1):
+		"""
+		\brief process the passed in fasta file and look for conserved areas in relation to this dotplot
+		\details loads in the specified fasta file. Then indexes it. Then for each "dot" in this dotplot, find matching regions in the other area. Add the
+		matching dot pos and length into the conserved store
+		"""
+		# get the sequence we are searching for conserved regions
+		sequence = str(reduce(lambda x,y: x+y, [x.seq for x in SeqIO.parse(open(filename),"fasta")])).upper()
+
+		# we want to index this 3rd sequence
+		tables=buildMappingTables(sequence, self.ktup)			# our tables var = <ctypes.LP_c_void object at 0x??????>
+
+		# our dotstores
+		forward, backward = self.dotstore.items()[0][1]
+
+		# for each dot&length in the dotstore
+		for dotnum in range(len(forward)):
+			print dotnum,"/",len(forward)
+			dot = forward.GetDot(dotnum)
+			seqx = self.seqstore[0][dot.x:dot.x+dot.length]
+			seqy = self.seqstore[1][dot.y:dot.y+dot.length]
+			#seqx = self.GetSubSequence(0,dot.x,dot.x+dot.length)
+			#seqy = self.GetSubSequence(1,dot.y,dot.y+dot.length)
+			assert seqx==seqy
+
+			# now using the tables indexing, search for the longest match from this plot sequence.
+			print "findLongestMatch(): sequence=%d seqx=%d x=%d y=%d length=%d"%(len(sequence),len(seqx),dot.x,dot.y,dot.length)
+			pos, length = findLongestMatch( tables, sequence, seqx, self.ktup, self.window, self.mismatch, self.minmatch )
+
+			#if pos==None:
+				#print "No match found"
+			#else:
+				#print "pos=",pos,"length=",length
+				
+				#print seqx
+				#print sequence[pos:pos+length]
+			#print "="*40
+			self.conservedstore[0].AddDot(dot.x,dot.y,length)
+		
+		end0=self.ProcEnd(0,None)
+		end1=self.ProcEnd(1,None)
+		translate = lambda seq: ''.join([{'A':'T','T':'A','G':'C','C':'G'}[a] for a in seq.upper()])
+		for dotnum in range(len(backward)):
+			print dotnum,"/",len(forward)
+			dot = backward.GetDot(dotnum)
+			seqx = self.seqstore[0][dot.x:dot.x+dot.length]
+			#seqx = self.seqstore[0][end0-dot.x-dot.length:end0-dot.x]
+			seqy = translate(self.seqstore[1][end1-dot.y-dot.length:end1-dot.y])[::-1]
+			#seqy = self.seqstore[1][dot.y:dot.y+dot.length]
+			#seqx = self.GetSubSequence(0,dot.x,dot.x+dot.length)
+			#seqy = self.GetSubSequence(1,dot.y,dot.y+dot.length)
+			#print seqx
+			#print seqy
+			assert seqx==seqy
+
+			# now using the tables indexing, search for the longest match from this plot sequence.
+			pos, length = findLongestMatch( tables, sequence, seqx, self.ktup, self.window, self.mismatch, self.minmatch )
+
+			#if pos==None:
+				#print "No match found"
+			#else:
+				#print "pos=",pos,"length=",length
+				
+				#print seqx
+				#print sequence[pos:pos+length]
+			#print "="*40
+			self.conservedstore[1].AddDot(dot.x,dot.y,length)
+			
+		self.dotstore["conserved"]=self.conservedstore
+		
+		
 	def CalculateDotStore(self, dimension=1, start=None, end=None, compstart=None, compend=None ):
 		"""
 		\brief performs the calculation of the dot plot for the entire sequences
@@ -230,7 +325,6 @@ class DotPlot:
 		dotstore.SetMaxY(maxy)
 		revdotstore.SetMaxX(maxx)
 		revdotstore.SetMaxY(maxy)
-		
 		
 		return (dotstore, revdotstore)
 	
@@ -347,7 +441,7 @@ class DotPlot:
 		# create indexes
 		[[dots.CreateIndex() for dots in stores] for stores in self.dotstore.values()]
 	
-	def MakeAverageGrid(self,scale,x1=None,y1=None,x2=None,y2=None,storekey=None):
+	def MakeAverageGrid(self,scale,x1=None,y1=None,x2=None,y2=None,storekey=None, conserved=False):
 		"""
 		\brief Calculates the reduced score grid
 		\details Uses a fairly optimised algorithm to convert the calculated dot store into a grid of averaged values. These
@@ -360,8 +454,10 @@ class DotPlot:
 		"""
 		if storekey==None:
 			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
+			
+		key="conserved" if conserved else storekey
 		
-		assert(self.dotstore[storekey])
+		assert(self.dotstore[key])
 		self.scale=scale
 		
 		(dim,start,end,compstart,compend)=storekey
@@ -377,25 +473,43 @@ class DotPlot:
 		# forward and reverse grid
 		grid=[DotGrid(),DotGrid()]
 		
-		[g.Calculate(dots,x1,y1,x2,y2,scale,self.window) for g,dots in zip(grid,self.dotstore[storekey])]
+		[g.Calculate(dots,x1,y1,x2,y2,scale,self.window) for g,dots in zip(grid,self.dotstore[key])]
 		grid[1].FlipInplace()
 		grid[0].AddInplace(grid[1])
-		self.grid[storekey]=grid[0]
+		self.grid[key]=grid[0]
 		
 		return grid[0]
 		
-	def MakeImage(self, storekey=None,major=None,minor=None,seqbound=(0,0,255),filebound=(255,0,0),alpha=24):
+	def MakeImage(self, storekey=None,major=None,minor=None,seqbound=(0,0,255),filebound=(255,0,0),alpha=24, conserved=False, invert=False):
 		"""
 		\brief Makes a DotPlot image from the averaged grid data
 		"""
 		if storekey==None:
 			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
 		
-		string=self.grid[storekey].ToString()
-		image=Image.fromstring("L", (self.grid[storekey].GetWidth(),self.grid[storekey].GetHeight()), string).convert("RGB")
+		key="conserved" if conserved else storekey
 		
-		self.DrawBounds(image,storekey[3],storekey[1],storekey[4],storekey[2], seqbound=tuple(list(seqbound)+[alpha]),filebound=tuple(list(seqbound)+[alpha]))
-		image=self.AddAxis(image,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor,seqbound=seqbound,filebound=filebound)
+		string=self.grid[key].ToString()
+		image=Image.fromstring("L", (self.grid[key].GetWidth(),self.grid[key].GetHeight()), string)
+		
+		if invert:
+			image=ImageChops.invert(image)
+		
+		#image=image.convert("RGB")
+		
+		return image
+		
+	def CompileImage(self, storekey=None,major=None,minor=None,seqbound=(0,0,255),filebound=(255,0,0),alpha=24, dotimage=None, conservedimage=None):
+		"""
+		\brief Makes a DotPlot image from the averaged grid data
+		"""
+		if storekey==None:
+			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
+		
+		assert dotimage.size == conservedimage.size
+		
+		self.DrawBounds(dotimage,storekey[3],storekey[1],storekey[4],storekey[2], seqbound=tuple(list(seqbound)+[alpha]),filebound=tuple(list(seqbound)+[alpha]))
+		image=self.AddAxis(dotimage,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor,seqbound=seqbound,filebound=filebound)
 		
 		return image
 	
