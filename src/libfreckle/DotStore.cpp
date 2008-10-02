@@ -235,6 +235,13 @@ Dot *DotStore::GetIndexDot(int x,int y)
 	assert(index);				//we must be indexed
 	
 	LinkedListVal<Dot *> *result=index->SpatialQuery(x,y,x,y);
+
+	if( not(result->Length()==1 || result->Length()==0))
+	{
+		printf("Length: %d\n",result->Length());
+		printf("X: %d Y: %d\n",x,y);
+	}
+
 	assert(result->Length()==1 || result->Length()==0);
 
 	if(result->Length()==0)
@@ -256,7 +263,7 @@ Dot *DotStore::GetIndexLongestMatchingRowDot(int y)
 {
 	assert(index);				//we must be indexed
 
-	printf("Doing spatial query on %ld (%d,%d,%d,%d)\n",(long)index,0,y,maxx,y);
+	//printf("Doing spatial query on %ld (%d,%d,%d,%d)\n",(long)index,0,y,maxx,y);
 	LinkedListVal<Dot *> *result = index->SpatialQuery(0,y,maxx,y);
 	
 	// find out which dot matched is the longest
@@ -312,7 +319,7 @@ int DotStore::CountAreaMatches(double x1, double y1, double x2, double y2, int w
 
 	double dwindow=(double)window;
 
-	printf("DotStore::CountAreaMatches(): %d\n",numdots);
+	//printf("DotStore::CountAreaMatches(): %d\n",numdots);
 
 	int count=0;
 
@@ -509,8 +516,8 @@ void DotStore::Interpolate(int window)
 
 	Dot *dot=NULL;
 
-	printf("PREInterpolate\n");
-	Dump();
+	//printf("PREInterpolate\n");
+	//Dump();
 
 	for(int i=0; i<GetNum(); i++)
 	{
@@ -542,6 +549,6 @@ void DotStore::Interpolate(int window)
 
 	delete extradots;
 
-	printf("POSTInterpolate\n");
-	Dump();
+	//printf("POSTInterpolate\n");
+	//Dump();
 }

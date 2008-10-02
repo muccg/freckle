@@ -9,8 +9,8 @@ CC=gcc
 ARCH = opteron
 
 # not debug
-CPPFLAGS=-fPIC -march=$(ARCH) -g -Wall -m64
-LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -g -Wall -m64
+CPPFLAGS=-fPIC -march=$(ARCH) -Wall -m64
+LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -Wall -m64
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 

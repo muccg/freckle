@@ -1,5 +1,6 @@
 #include "QuadTreeNode.h"
 #include <memory.h>
+#include <stdio.h>
 
 QuadTreeNode::QuadTreeNode()
 {
@@ -103,6 +104,26 @@ void QuadTreeNode::AddDot(Dot *dt)
 	}
 	else
 	{
+		// see if a node with this point is already here
+		for(int i=0; i<NUMDOTS; i++)
+		{
+			if(store.dot[i])
+			{
+				if(	(store.dot[i]->x == dt->x) &&
+					(store.dot[i]->y == dt->y) )
+				{
+					if(store.dot[i]->length < dt->length)
+					{
+						// if its longer make the stored point longer
+						store.dot[i]->length = dt->length;
+					}
+
+					// its already here, we can leave this (unique XY)
+					return;
+				}
+			}
+		}
+
 		// this is a leaf. see if we can store it here
 		for(int i=0; i<NUMDOTS; i++)
 			if(!store.dot[i])

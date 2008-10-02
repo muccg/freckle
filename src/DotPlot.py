@@ -8,6 +8,7 @@ import os.path
 from time import time
 from struct import pack, unpack, calcsize
 import pickle
+from collections import defaultdict
 
 def locatefile(filename):
 	"""use the 'locate' shell command to find all the locations of a file"""
@@ -146,7 +147,6 @@ class DotPlot:
 	def Interpolate(self):
 		"""Interpolate all the dot stores"""
 		for key in self.dotstore.keys():
-			print "Interpolating",key,self.window
 			self.dotstore[key][0].Interpolate(self.window)
 			self.dotstore[key][1].Interpolate(self.window)
 			
@@ -210,7 +210,763 @@ class DotPlot:
 
 		return store
 
-	def ProcessConservedRegions(self, filename, dimension=1):
+	def ProcessConservedRegions(self, filename):
+		# 1. run the other two dotplots
+		#print "calculating conserved dotplots..."
+		dp1 = LBDotPlot( self.filenames[0], [filename], ktup=11, window=19, minmatch=11, mismatch=1 )
+		dp1.CalculateDotStore()
+		
+		dp2 = LBDotPlot( self.filenames[1], [filename], ktup=11, window=17, minmatch=11, mismatch=1 )
+		dp2.CalculateDotStore()
+		#print "done."
+		
+		conserved = [DotStore(),DotStore()]
+		
+		#shortcuts for our dotplot results.
+		pos,neg = self.dotstore.items()[0][1]
+		pos1,neg1=dp1.dotstore.items()[0][1]
+		pos2,neg2=dp2.dotstore.items()[0][1]
+		
+		# lengths
+		len0 = len(self.seqstore[0])
+		len1 = len(self.seqstore[1])
+		len2 = len(dp1.AssembleFullSequence(1))
+		
+		neg.FlipY(len1)
+		#sys.exit()
+		
+		#print "LEN",len0,len1,len2
+		#sys.exit()
+		
+		#dump=neg
+		##print dump, len(dump)
+		#print "-----------------------"
+		#print "[neg strand]"
+		#print "%d dots"%len(dump)
+		#for n in range(len(dump)):
+			#d = dump[n]
+			#print "%d\t%d\t%d"%(d.x,d.y,d.length)
+		#sys.exit()
+		
+		#print "POSITIVE vs POSITIVE/POSITIVE"
+		self.Step2( (pos,pos1,pos2), (1,1,1), (len0,len1,len2), conserved[0] )
+		
+		#print "POSITIVE vs NEGATIVE/NEGATIVE"
+		self.Step2( (pos,neg1,neg2), (1,-1,-1), (len0,len1,len2), conserved[0] )
+		
+		#print "NEGATIVE vs POSITIVE/NEGATIVE"
+		self.Step2( (neg,pos1,neg2), (-1,1,-1), (len0,len1,len2), conserved[1] )
+		
+		#print "NEGATIVE vs NEGATIVE/POSITIVE"
+		self.Step2( (neg,neg1,pos2), (-1,-1,1), (len0,len1,len2), conserved[1] )
+		
+		#print "--------------------------------------"
+		
+		conserved[1].FlipY(len1)
+		neg.FlipY(len1)
+		
+		return conserved
+		
+	def CalculateConservedIntersection(self, conservedlist):
+		#print [(a,len(a)) for a in self.conservedstore]
+		
+		conservedstore = self.conservedstore
+		X = len(self.seqstore[0])
+		Y = len(self.seqstore[1])
+		
+		# for each plot in the conserved list
+		diags = [defaultdict(list), defaultdict(list)]
+		
+		for cl in conservedlist:
+			
+			for dpi in (0,1):
+				dp = cl[dpi]
+				
+				# for each diagonal line (defined by x-y)
+				for di in range(len(dp)):
+					dot = dp[di]
+					x,y,l = dot.x, dot.y, dot.length
+					
+					# set n to be the position up the diagonal
+					n = x if x<=y else y
+					
+					# add leading edge
+					diags[dpi][(x-y)].append( (n,True) )				# add it to the list, or make the list if x-y is not a valid key
+				
+					# add trailing edge
+					diags[dpi][(x-y)].append( (n+l,False) )				# add it to the list, or make the list if x-y is not a valid key
+			
+			
+		# do for both forward and reverse
+		for dpi in (0,1):
+				
+			# at this stage we have diags[V] represent the superposition of the Vth positive diagonal
+			# now we can go through each diagonal from -Y to +X and sort over these "edges"
+			# we increase a count on a leading edge and decrease a count on a trailing edge, as we move through the edges in order
+			# when the count hits len(conservedlist), then its the begining of a point in the intersection
+			# when the count drops from len(conservedlist), then its the end of an intersection point
+			output={}
+			for key in range(-Y,X+1):
+				diag = diags[dpi][key]
+				if len(diag):
+					diag.sort()
+					count=0
+					start=-1
+					end=-1
+					parts = []
+					for value,edge in diag:
+						if edge:
+							count+=1
+						else:
+							count-=1
+						
+						if count==len(conservedlist):
+							# weve hit the number
+							start=value
+						else:
+							# we aren't on the number
+							# did we fall from the number?
+							if start!=-1:
+								end=value
+								parts.append( (start,end) )	
+								start=-1
+							
+					output[key]=parts
+					
+				
+			# now we reduce these representations of the diagonal into their cartesian X/Y form
+			for key in output.keys():
+				# set the starting point of this diagonal
+				if key<0:
+					x=0
+					y=-key
+				else:
+					x=key
+					y=0
+					
+				# go through starts and ends
+				for start,end in output[key]:
+					# turn into cartesian dot position
+					xpos,ypos,length = x+start, y+start, end-start
+					conservedstore[dpi].AddDot(xpos, ypos, length)
+					
+				
+				
+			
+				
+				#conservedstore[0].AddDot(dot.x,dot.y,dot.length)
+				
+			#for i in range(len(neg)):
+				#dot = neg[i]
+				#conservedstore[1].AddDot(dot.x,dot.y,dot.length)
+			
+		
+			
+		self.dotstore["conserved"]=self.conservedstore
+		
+	def Step2(self,dotstores, directions, lengths, conservedstore):
+		# dotstores should (ds1, ds2, ds3)
+		assert len(dotstores)==3
+		# directions should be ( +/- 1, +/- 1, +/- 1)
+		assert len(directions)==3
+		assert False not in [directions[a]==1 or directions[a]==-1 for a in (0,1,2)]
+		# lengths should be the lengths of all the sequences
+		assert len(lengths)==3
+		
+		
+		ds1,ds2,ds3=dotstores
+		dir1,dir2,dir3=directions
+		len1,len2,len3=lengths
+		
+		dottemp={}
+		
+		for doti in range(len(ds1)):
+			#print "%d/%d"%(doti,len(ds1))
+			incdots1=[]
+			incdots2=[]
+			
+			dot=ds1[doti]
+			x,y,length=dot.x,dot.y,dot.length
+			
+			#y = (len1-y) if dir1==-1 else y
+			#seqx = self.seqstore[0][dot.x:dot.x+dot.length]
+			
+			x1,x2=x,x+length
+			
+			# loop over ds2 dots looking for any dots that fall in this region
+			for di in range(len(ds2)):
+				#print di,"/",len(pos1)
+				d=ds2[di]
+				d.y = (len2-d.y) if dir2==-1 else d.y
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
+					# we overlap and should be included
+					incdots1.append((d.x,d.y,d.length))
+			
+			#seqy = self.seqstore[1][dot.y:dot.y+dot.length]
+			y1,y2=y,y+length
+			
+			# loop over dp2 dots looking for any positive dots that fall in this region
+			for di in range(len(ds3)):
+				#print di,"/",len(pos2)
+				d=ds3[di]
+				d.y = (len3-d.y) if dir3==-1 else d.y
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
+					# we overlap and should be included
+					incdots2.append((d.x,d.y,d.length))
+			
+			#print "INC",incdots1,incdots2
+			#if len(incdots1) and len(incdots2):
+				#print "FOUND AddDot",incdots1,incdots2
+			#print "done."
+			
+			#print "step 3..."
+			
+			overlap = lambda a0,a1,b0,b1: not ( ((a0+a1) < b0 ) or ( (b0+b1) < a0 ) ) 
+			
+			def CalculateOverlap( astart, alength, bstart, blength ):
+				aend = astart + alength
+				bend = bstart + blength
+				
+				if bstart >= astart and bstart <= aend:
+					if bend < aend:
+						return bstart, bend
+					return bstart, aend
+				
+				if bend >= astart and bend <= aend:
+					return astart, bend
+				
+				if bstart < astart and bend > aend:
+					return astart, aend
+				
+				print astart,aend,bstart,bend
+				assert False
+			
+			X,Y,L=0,1,2
+			
+			if dir2==1 and dir3==1:
+				compares = [(a,b) for a in incdots1 for b in incdots2 if overlap(a[Y],a[L],b[Y],b[L])]
+			elif dir2==-1 and dir3==1:
+				compares = [(a,b) for a in incdots1 for b in incdots2 if overlap(len2-a[Y],a[L],b[Y],b[L])]
+			elif dir2==1 and dir3==-1:
+				compares = [(a,b) for a in incdots1 for b in incdots2 if overlap(a[Y],a[L],len3-b[Y],b[L])]
+			elif dir2==-1 and dir3==-1:
+				compares = [(a,b) for a in incdots1 for b in incdots2 if overlap(len2-a[Y],a[L],len3-b[Y],b[L])]
+			else:
+				assert False, "Unknown direction parameter"
+				
+			#if len(compares):
+				#print "COMPARES",compares
+				
+			for d1, d2 in compares:
+				# compare d1 and d2 on the j axis
+				#print d1,d2,(dot.x,dot.y,dot.length)
+				
+				# cast these to the axis
+				xstart, xend = CalculateOverlap( dot.x, dot.length, d1[0], d1[2] )		# [0]=x, [2]=l
+				ystart, yend = CalculateOverlap( dot.y, dot.length, d2[0], d2[2] )		# [0]=x, [2]=l
+				
+				# then cast these to the original "P" dot match
+				xoff=xstart-dot.x
+				yoff=ystart-dot.y
+				
+				if xoff > yoff:
+					matchstart=xoff
+					matchlength=xend-xstart
+				elif yoff > xoff:
+					matchstart=yoff
+					matchlength=yend-ystart
+				else:
+					#print xoff, yoff,":",xstart,xend,xend-xstart,"|",ystart,yend,yend-ystart
+					assert xoff==yoff
+					if xend-xstart < yend-ystart:
+						matchstart=xoff
+						matchlength=xend-xstart
+					elif xend-xstart > yend-ystart:
+						matchstart=yoff
+						matchlength=yend-ystart
+					else:
+						assert xend-xstart == yend-ystart
+						matchstart=yoff
+						matchlength=yend-ystart
+					
+				xs = dot.x+matchstart
+				ys = dot.y+matchstart
+					
+				# add this dot to the conserved dotstore
+				#print xend-xstart,yend-ystart,xstart,xend,ystart,yend,"=>",xs,ys,matchlength
+				
+				x,y,l=xstart,ystart,xend-xstart
+				if dottemp.has_key((x,y)):
+					#is this longer?
+					if l > dottemp[(x,y)]:
+						dottemp[(x,y)]=l
+				else:
+					dottemp[(x,y)]=l
+					
+				#print "final dot:",x,y,l
+					
+		# add the dots for real
+		for x,y in dottemp.keys():
+			conservedstore.AddDot(x,y,dottemp[(x,y)])
+		
+		
+
+	def DeprecatedProcessConservedRegions(self, filename):
+		# 1. run the other two dotplots
+		#print "calculating conserved dotplots..."
+		dp1 = LBDotPlot( self.filenames[0], [filename] )
+		dp1.CalculateDotStore()
+		
+		dp2 = LBDotPlot( self.filenames[1], [filename] )
+		dp2.CalculateDotStore()
+		#print "done."
+		
+		#print "step 2..."
+		pos,neg = self.dotstore.items()[0][1]
+		pos1,neg1=dp1.dotstore.items()[0][1]
+		pos2,neg2=dp2.dotstore.items()[0][1]
+		
+		##
+		## POSITIVE
+		##
+		print "POS AddDot ----------------------------------------------"
+		dottemp={}
+			
+		for doti in range(len(pos)):
+			incdots1=[]
+			incdots2=[]
+			
+			dot=pos[doti]
+			x,y,length=dot.x,dot.y,dot.length
+			seqx = self.seqstore[0][dot.x:dot.x+dot.length]
+			
+			x1,x2=x,x+length
+			
+			# loop over dp1 dots looking for any positive dots that fall in this region
+			#print x,y,length
+			for di in range(len(pos1)):
+				#print di,"/",len(pos1)
+				d=pos1[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
+					# we overlap and should be included
+					incdots1.append((d.x,d.y,d.length))
+			
+			seqy = self.seqstore[1][dot.y:dot.y+dot.length]
+			y1,y2=y,y+length
+			
+			# loop over dp2 dots looking for any positive dots that fall in this region
+			for di in range(len(pos2)):
+				#print di,"/",len(pos2)
+				d=pos2[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
+					# we overlap and should be included
+					incdots2.append((d.x,d.y,d.length))
+			
+			#print "INC",incdots1,incdots2
+			if len(incdots1) and len(incdots2):
+				print "FOUND AddDot"
+			#print "done."
+			
+			#print "step 3..."
+			
+			overlap = lambda a,b: not ( ((a[1]+a[2]) < b[1] ) or ( (b[1]+b[2]) < a[1] ) ) 
+			
+			def CalculateOverlap( astart, alength, bstart, blength ):
+				aend = astart + alength
+				bend = bstart + blength
+				
+				if bstart >= astart and bstart <= aend:
+					if bend < aend:
+						return bstart, bend
+					return bstart, aend
+				
+				if bend >= astart and bend <= aend:
+					return astart, bend
+				
+				if bstart < astart and bend > aend:
+					return astart, aend
+				
+				print astart,aend,bstart,bend
+				assert False
+					
+			
+			compares = [(x,y) for x in incdots1 for y in incdots2 if overlap(x,y)]
+			for d1, d2 in compares:
+				# compare d1 and d2 on the j axis
+				#print d1,d2,(dot.x,dot.y,dot.length)
+				
+				# cast these to the axis
+				xstart, xend = CalculateOverlap( dot.x, dot.length, d1[0], d1[2] )
+				ystart, yend = CalculateOverlap( dot.y, dot.length, d2[0], d2[2] )
+				
+				# then cast these to the original "P" dot match
+				xoff=xstart-dot.x
+				yoff=ystart-dot.y
+				
+				if xoff > yoff:
+					matchstart=xoff
+					matchlength=xend-xstart
+				elif yoff > xoff:
+					matchstart=yoff
+					matchlength=yend-ystart
+				else:
+					#print xoff, yoff,":",xstart,xend,xend-xstart,"|",ystart,yend,yend-ystart
+					assert xoff==yoff
+					if xend-xstart < yend-ystart:
+						matchstart=xoff
+						matchlength=xend-xstart
+					elif xend-xstart > yend-ystart:
+						matchstart=yoff
+						matchlength=yend-ystart
+					else:
+						assert xend-xstart == yend-ystart
+						matchstart=yoff
+						matchlength=yend-ystart
+					
+				xs = dot.x+matchstart
+				ys = dot.y+matchstart
+					
+				# add this dot to the conserved dotstore
+				#print xend-xstart,yend-ystart,xstart,xend,ystart,yend,"=>",xs,ys,matchlength
+				
+				x,y,l=xstart,ystart,xend-xstart
+				if dottemp.has_key((x,y)):
+					#is this longer?
+					if l > dottemp[(x,y)]:
+						dottemp[(x,y)]=l
+				else:
+					dottemp[(x,y)]=l
+				
+		# add the dots for real
+		for x,y in dottemp.keys():
+			self.conservedstore[0].AddDot(x,y,dottemp[(x,y)])
+				
+			
+				
+			print "LEN=",len(compares)
+
+		##
+		## NEGATIVE
+		##
+		print "Neg AddDot ----------------------------------------------"
+	
+		for doti in range(len(neg)):
+			incdots1=[]
+			incdots2=[]
+			
+			dot=neg[doti]
+			x,y,length=dot.x,dot.y,dot.length
+			seqx = self.seqstore[1][dot.y:dot.y+dot.length]
+			
+			x1,x2=x,x+length
+			
+			# loop over dp1 dots looking for any positive dots that fall in this region
+			#print x,y,length
+			for di in range(len(neg1)):
+				#print di,"/",len(pos1)
+				d=neg1[di]
+				dx,dend=d.x,d.x+d.length
+				#print "(%d, %d) : (%d, %d)"%(dx,dend,x1,x2)
+				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
+					# we overlap and should be included
+					incdots1.append((d.x,d.y,d.length))
+			
+			print "incdots1 =",incdots1
+			
+			seqy = self.seqstore[0][dot.x:dot.x+dot.length]
+			y1,y2=y,y+length
+			
+			# loop over dp2 dots looking for any positive dots that fall in this region
+			for di in range(len(neg2)):
+				#print "-ve:",di,"/",len(neg2)
+				d=neg2[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
+					# we overlap and should be included
+					incdots2.append((d.x,d.y,d.length))
+			
+			print "incdots2 =",incdots2
+			
+			if len(incdots1) and len(incdots2):
+				print "FOUND AddDot"
+			
+			#print "done."
+			
+			#print "step 3..."
+			
+			overlap = lambda a,b: not ( ((a[1]+a[2]) < b[1] ) or ( (b[1]+b[2]) < a[1] ) ) 
+			
+			def CalculateOverlap( astart, alength, bstart, blength ):
+				aend = astart + alength
+				bend = bstart + blength
+				
+				if bstart >= astart and bstart <= aend:
+					if bend < aend:
+						return bstart, bend
+					return bstart, aend
+				
+				if bend >= astart and bend <= aend:
+					return astart, bend
+				
+				if bstart < astart and bend > aend:
+					return astart, aend
+				
+				print astart,aend,bstart,bend
+				assert False
+					
+			
+			compares = [(x,y) for x in incdots1 for y in incdots2 if overlap(x,y)]
+			for d1, d2 in compares:
+				# compare d1 and d2 on the j axis
+				print "NEG comp:",d1,d2,(dot.x,dot.y,dot.length)
+				
+				# cast these to the axis
+				xstart, xend = CalculateOverlap( dot.x, dot.length, d1[0], d1[2] )
+				ystart, yend = CalculateOverlap( dot.y, dot.length, d2[0], d2[2] )
+				
+				# then cast these to the original "P" dot match
+				xoff=xstart-dot.x
+				yoff=ystart-dot.y
+				
+				if xoff > yoff:
+					matchstart=xoff
+					matchlength=xend-xstart
+				elif yoff > xoff:
+					matchstart=yoff
+					matchlength=yend-ystart
+				else:
+					assert xoff==yoff
+					assert xend-xstart == yend-ystart
+					matchstart=yoff
+					matchlength=yend-ystart
+					
+				xs = dot.x+matchstart
+				ys = dot.y+matchstart
+					
+				# add this dot to the conserved dotstore
+				#print xend-xstart,yend-ystart,xstart,xend,ystart,yend,"=>",xs,ys,matchlength
+				conservedstore.AddDot(xstart,ystart,xend-xstart)
+				
+			#print "LEN=",len(compares)
+			
+			
+		##
+		## Neg vs Pos
+		##
+		print "Neg vs Pos AddDot ----------------------------------------------"
+
+		for doti in range(len(neg)):
+			incdots1=[]
+			incdots2=[]
+			
+			dot=neg[doti]
+			x,y,length=dot.x,dot.y,dot.length
+			seqx = self.seqstore[1][dot.y:dot.y+dot.length]
+			
+			x1,x2=x,x+length
+			
+			# loop over dp1 dots looking for any positive dots that fall in this region
+			#print x,y,length
+			for di in range(len(neg1)):
+				#print di,"/",len(pos1)
+				d=neg1[di]
+				dx,dend=d.x,d.x+d.length
+				#print "(%d, %d) : (%d, %d)"%(dx,dend,x1,x2)
+				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
+					# we overlap and should be included
+					incdots1.append((d.x,d.y,d.length))
+			
+			print "incdots1 =",incdots1
+			
+			seqy = self.seqstore[1][dot.y:dot.y+dot.length]
+			y1,y2=y,y+length
+			
+			# loop over dp2 dots looking for any positive dots that fall in this region
+			for di in range(len(pos2)):
+				#print di,"/",len(pos2)
+				d=pos2[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
+					# we overlap and should be included
+					incdots2.append((d.x,d.y,d.length))
+					
+			print "incdots2 =",incdots2
+			
+			if len(incdots1) and len(incdots2):
+				print "FOUND AddDot"
+			
+			#print "done."
+			
+			#print "step 3..."
+			
+			overlap = lambda a,b: not ( ((a[1]+a[2]) < b[1] ) or ( (b[1]+b[2]) < a[1] ) ) 
+			
+			def CalculateOverlap( astart, alength, bstart, blength ):
+				aend = astart + alength
+				bend = bstart + blength
+				
+				if bstart >= astart and bstart <= aend:
+					if bend < aend:
+						return bstart, bend
+					return bstart, aend
+				
+				if bend >= astart and bend <= aend:
+					return astart, bend
+				
+				if bstart < astart and bend > aend:
+					return astart, aend
+				
+				print astart,aend,bstart,bend
+				assert False
+					
+			
+			compares = [(x,y) for x in incdots1 for y in incdots2 if overlap(x,y)]
+			for d1, d2 in compares:
+				# compare d1 and d2 on the j axis
+				print "AddDot NEG/POS comp:",d1,d2,(dot.x,dot.y,dot.length)
+				
+				# cast these to the axis
+				xstart, xend = CalculateOverlap( dot.x, dot.length, d1[0], d1[2] )
+				ystart, yend = CalculateOverlap( dot.y, dot.length, d2[0], d2[2] )
+				
+				# then cast these to the original "P" dot match
+				xoff=xstart-dot.x
+				yoff=ystart-dot.y
+				
+				if xoff > yoff:
+					matchstart=xoff
+					matchlength=xend-xstart
+				elif yoff > xoff:
+					matchstart=yoff
+					matchlength=yend-ystart
+				else:
+					assert xoff==yoff
+					assert xend-xstart == yend-ystart
+					matchstart=yoff
+					matchlength=yend-ystart
+					
+				xs = dot.x+matchstart
+				ys = dot.y+matchstart
+					
+				# add this dot to the conserved dotstore
+				#print xend-xstart,yend-ystart,xstart,xend,ystart,yend,"=>",xs,ys,matchlength
+				self.conservedstore[1].AddDot(xstart,ystart,xend-xstart)
+				
+			#print "LEN=",len(compares)
+			
+			
+		##
+		## Pos vs Neg
+		##
+		print "Pos vs Neg AddDot ----------------------------------------------"
+
+		for doti in range(len(neg)):
+			incdots1=[]
+			incdots2=[]
+			
+			dot=neg[doti]
+			x,y,length=dot.x,dot.y,dot.length
+			seqx = self.seqstore[1][dot.y:dot.y+dot.length]
+			
+			x1,x2=x,x+length
+			
+			# loop over dp1 dots looking for any positive dots that fall in this region
+			#print x,y,length
+			for di in range(len(pos1)):
+				#print di,"/",len(pos1)
+				d=pos1[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
+					# we overlap and should be included
+					incdots1.append((d.x,d.y,d.length))
+			
+			print "incdots1 =",incdots1
+			
+			seqy = self.seqstore[0][dot.x:dot.x+dot.length]
+			y1,y2=y,y+length
+			
+			# loop over dp2 dots looking for any positive dots that fall in this region
+			for di in range(len(neg2)):
+				#print "-ve:",di,"/",len(neg2)
+				d=neg2[di]
+				dx,dend=d.x,d.x+d.length
+				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
+					# we overlap and should be included
+					incdots2.append((d.x,d.y,d.length))
+			
+			print "incdots2 =",incdots2
+			
+			if len(incdots1) and len(incdots2):
+				print "FOUND AddDot"
+			
+			#print "done."
+			
+			#print "step 3..."
+			
+			overlap = lambda a,b: not ( ((a[1]+a[2]) < b[1] ) or ( (b[1]+b[2]) < a[1] ) ) 
+			
+			def CalculateOverlap( astart, alength, bstart, blength ):
+				aend = astart + alength
+				bend = bstart + blength
+				
+				if bstart >= astart and bstart <= aend:
+					if bend < aend:
+						return bstart, bend
+					return bstart, aend
+				
+				if bend >= astart and bend <= aend:
+					return astart, bend
+				
+				if bstart < astart and bend > aend:
+					return astart, aend
+				
+				print astart,aend,bstart,bend
+				assert False
+					
+			
+			compares = [(x,y) for x in incdots1 for y in incdots2 if overlap(x,y)]
+			for d1, d2 in compares:
+				# compare d1 and d2 on the j axis
+				print "NEG comp:",d1,d2,(dot.x,dot.y,dot.length)
+				
+				# cast these to the axis
+				xstart, xend = CalculateOverlap( dot.x, dot.length, d1[0], d1[2] )
+				ystart, yend = CalculateOverlap( dot.y, dot.length, d2[0], d2[2] )
+				
+				# then cast these to the original "P" dot match
+				xoff=xstart-dot.x
+				yoff=ystart-dot.y
+				
+				if xoff > yoff:
+					matchstart=xoff
+					matchlength=xend-xstart
+				elif yoff > xoff:
+					matchstart=yoff
+					matchlength=yend-ystart
+				else:
+					assert xoff==yoff
+					assert xend-xstart == yend-ystart
+					matchstart=yoff
+					matchlength=yend-ystart
+					
+				xs = dot.x+matchstart
+				ys = dot.y+matchstart
+					
+				# add this dot to the conserved dotstore
+				#print xend-xstart,yend-ystart,xstart,xend,ystart,yend,"=>",xs,ys,matchlength
+				self.conservedstore[1].AddDot(xstart,ystart,xend-xstart)
+				
+			#print "LEN=",len(compares)
+			
+			
+		
+		self.dotstore["conserved"]=self.conservedstore
+
+	def DeprecatedProcessConservedRegions(self, filename, dimension=1):
 		"""
 		\brief process the passed in fasta file and look for conserved areas in relation to this dotplot
 		\details loads in the specified fasta file. Then indexes it. Then for each "dot" in this dotplot, find matching regions in the other area. Add the
@@ -506,7 +1262,8 @@ class DotPlot:
 		if storekey==None:
 			storekey=(1,0,self.GetSequenceLength(1),0,self.GetSequenceLength(0))
 		
-		assert dotimage.size == conservedimage.size
+		if conservedimage:
+			assert dotimage.size == conservedimage.size
 		
 		self.DrawBounds(dotimage,storekey[3],storekey[1],storekey[4],storekey[2], seqbound=tuple(list(seqbound)+[alpha]),filebound=tuple(list(seqbound)+[alpha]))
 		image=self.AddAxis(dotimage,storekey[3],storekey[1],storekey[4],storekey[2],major=major,minor=minor,seqbound=seqbound,filebound=filebound)

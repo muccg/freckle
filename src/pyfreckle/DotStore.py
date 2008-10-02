@@ -30,7 +30,14 @@ class DotStore:
 		else:
 			return self.GetDot(item)
 	
+	def FlipY(self, ylength):
+		"""Flip all the y values to their inversions"""
+		for i in range(len(self)):
+			dot = self[i]
+			dot.y = ylength-dot.y
+	
 	def AddDot(self,x,y,length):
+		#print self,"::AddDot",x,y,length
 		self.lib.DotStoreAddDot(self.dotstore, x, y, length);
 	
 	def SetMaxX(self,x):

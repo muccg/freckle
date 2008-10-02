@@ -9,7 +9,7 @@
 import sys, getopt
 from Bio import SeqIO
 from numpy import array, zeros, int32
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops, ImageOps
 from time import time
 
 # switch this to True to get debug messages
@@ -24,7 +24,7 @@ defmismatch=0
 defalpha=24
 
 # version
-versionstring="0.7"
+versionstring="0.8"
 
 # algorithm defines
 LBDOT=0				#the default
@@ -38,6 +38,7 @@ def usage():
 	print "-x\t--xfile=\ta FASTA file for a sequence to be displayed on the x axis"
 	print "-y\t--yfile=\ta FASTA file for a sequence to be displayed on the y axis"
 	print "-C\t--conserved=\tspecify a fasta file to compare and mark conserved regions on the plot"
+	print "-H\t--highlighe=\tspecify the colour and width of the conserved highlight markers. eg. red:2 or #f08033:3"
 	print "-o\t--output=\tthe image file to write the output to."
 	print "-s\t--size=\t\tthe output image size. Should be expressed as integer. Determines the longest side of the grid. real image will be slightly larger. [Default: %d]"%defimagesize
 	print "-k\t--ktup=\t\tktuple size for tokenisation. [Default: %d]"%defktup
@@ -102,10 +103,11 @@ def parseopts():
 	filebound=(255,0,0)
 	alpha=defalpha
 	algo=LBDOT
+	highlight=[(255,128,128),3]
 	
 	#our getopt definition strings
-	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:vfc:b:a:C:"
-	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version","fine","colour=","bounds=","alpha=","conserved="]
+	shortopts="hx:y:o:s:k:w:m:d:S:L:M:T:F:vfc:b:a:C:H:"
+	longopts=["help","xfile=","yfile=","output=","size=","ktup=","window=","minmatch=","mismatch=","save=","load=","major=","minor=","filter=","version","fine","colour=","bounds=","alpha=","conserved=","highlight="]
 	
 	if len(sys.argv[1:])==0:
 		usage()
@@ -135,6 +137,9 @@ def parseopts():
 
 		elif o in ("-C","--conserved"):
 			conserved.append(a)
+			
+		elif o in ("-H","--highlight"):
+			highlight = [ parsecolour(a.split(':')[0]),int(a.split(':')[1])]
 			
 		elif o in ("-o","--output"):
 			outfile=a
@@ -210,7 +215,7 @@ def parseopts():
 		print "ERROR: mismatch size must be at less than window size, otherwise everything is a dot."
 		sys.exit(7)
 				
-	return xseq, yseq, conserved, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound, filebound, alpha
+	return xseq, yseq, conserved, highlight, outfile, imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound, filebound, alpha
 	
 def parsecolour(colourstring):
 	import string
@@ -236,12 +241,13 @@ def parsecolour(colourstring):
 		
 
 def main():
-	xseqfiles,yseqfiles,conserved,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound,filebound,alpha=parseopts()
+	xseqfiles,yseqfiles,conserved,highlight,outfile,imagesize,ktup,window,minmatch,mismatch,savefile,loadfile,major,minor,filt,algo, seqbound,filebound,alpha=parseopts()
 	
 	if DEBUG:
 		print "xsequences:",xseqfiles
 		print "ysequences:",yseqfiles
 		print "conserved:",conserved
+		print "highlight:",highlight
 		print "outfile:",outfile
 		print "imagesize",imagesize
 		print "ktuple",ktup
@@ -286,13 +292,15 @@ def main():
 		# we have some sequences to mark conserved regions from
 		plot.CreateConservedStore()
 		
-		print "..."
-		
 		# TODO: handle more than one
-		plot.ProcessConservedRegions(conserved[0])
+		conservedlist=[]
+		for num,cons in enumerate(conserved):
+			print "processing conserved sequence",num+1,"..."
+			conservedlist.append(plot.ProcessConservedRegions(cons))
 
+		plot.CalculateConservedIntersection(conservedlist)
 		print "done in",time()-t,"seconds"
-
+		
 		#sys.exit()
 		#assert(dimension==0 or dimension==1)
 		
@@ -343,9 +351,9 @@ def main():
 		plot.IndexDotStores()
 		print "done in",time()-t,"seconds"
 		
-		print plot.dotstore
-		for key in plot.dotstore:
-			print key,":",plot.dotstore[key],"=>",len(plot.dotstore[key][0]),len(plot.dotstore[key][1])
+		#print plot.dotstore
+		#for key in plot.dotstore:
+			#print key,":",plot.dotstore[key],"=>",len(plot.dotstore[key][0]),len(plot.dotstore[key][1])
 		
 		print "Calculating averaged grid..."
 		t=time()
@@ -369,25 +377,49 @@ def main():
 			cimage=plot.MakeImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, conserved=True, invert=True)
 			print "done in",time()-t,"seconds"
 		
-		from PIL import ImageChops, ImageOps
-		
-		COLOUR=(255,0,0)
-		
-		colourised = ImageOps.colorize(cimage, (255,255,255), tuple([255-COLOUR[i] for i in (0,1,2)]))
-		image = image.convert("RGB")
-		
-		out = ImageChops.multiply( colourised, image )
-		
-		out=ImageChops.invert(out)
+			COLOUR=highlight[0]
+			WIDTH=highlight[1]
+			
+			#colourised = ImageOps.colorize(cimage, (255,255,255), tuple([255-COLOUR[i] for i in (0,1,2)]))
+			colourised = ImageOps.colorize(cimage, (0,0,0), tuple([COLOUR[i] for i in (0,1,2)]))
+			
+			# make another image to paste this one onto
+			newim = Image.new( "RGB", colourised.size, (0,0,0) )
+			
+			#grow_matrix=range(-WIDTH,WIDTH)
+			
+			draw = ImageDraw.Draw(newim)
+			w,h = colourised.size
+			for x in range(w):
+				for y in range(h):
+					pix = colourised.getpixel( (x,y) )
+					if sum(pix):
+						#[ newim.putpixel( (x+X,y+Y), tuple([255-a for a  in COLOUR]) ) for X in grow_matrix for Y in grow_matrix if X*Y<=WIDTH ]
+						draw.ellipse( [(x-WIDTH,y-WIDTH),(x+WIDTH,y+WIDTH)], fill=tuple([255-a for a  in COLOUR]) )
+			
+			del draw
+			
+			colourised = newim
+			
+			image = image.convert("RGB")
+			
+			out = ImageChops.add( colourised, image )
+			
+			out=ImageChops.invert(out)
 		
 		print "Compiling image..."
 		t=time()
-		image2=plot.CompileImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, dotimage=image, conservedimage=cimage)
+		if not conserved:
+			image = image.convert("RGB")
+			out=ImageChops.invert(image)
+			
+		image2=plot.CompileImage(major=major,minor=minor,seqbound=seqbound,filebound=filebound,alpha=alpha, dotimage=out)
 		print "done in",time()-t,"seconds"
 		
 		#cimage.
 		
 		image2.save(outfile)
+		#colourised.save(outfile)
 		
 	sys.exit(0)
 
