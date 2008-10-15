@@ -288,7 +288,10 @@ class DotPlot:
 					x,y,l = dot.x, dot.y, dot.length
 					
 					# set n to be the position up the diagonal
-					n = x if x<=y else y
+					if x<=y:
+						n=x
+					else:
+						n=y
 					
 					# add leading edge
 					diags[dpi][(x-y)].append( (n,True) )				# add it to the list, or make the list if x-y is not a valid key
@@ -397,7 +400,8 @@ class DotPlot:
 			for di in range(len(ds2)):
 				#print di,"/",len(pos1)
 				d=ds2[di]
-				d.y = (len2-d.y) if dir2==-1 else d.y
+				if dir2==-1:
+					d.y = (len2-d.y)
 				dx,dend=d.x,d.x+d.length
 				if	not ( (dx<x1 and dend<=x1) or (dx>=x2 and dend>x2) ):
 					# we overlap and should be included
@@ -410,7 +414,8 @@ class DotPlot:
 			for di in range(len(ds3)):
 				#print di,"/",len(pos2)
 				d=ds3[di]
-				d.y = (len3-d.y) if dir3==-1 else d.y
+				if dir3==-1:
+					d.y = (len3-d.y)
 				dx,dend=d.x,d.x+d.length
 				if	not ( (dx<y1 and dend<=y1) or (dx>=y2 and dend>y2) ):
 					# we overlap and should be included

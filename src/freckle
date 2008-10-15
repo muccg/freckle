@@ -24,7 +24,7 @@ defmismatch=0
 defalpha=24
 
 # version
-versionstring="0.8"
+versionstring="0.8.1"
 
 # algorithm defines
 LBDOT=0				#the default
