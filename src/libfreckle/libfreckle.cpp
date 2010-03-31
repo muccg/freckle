@@ -82,7 +82,7 @@ TupleID getTupleID(const char *tuple, int len, const char *bases)
 		index=strchr(bases, (int)*tuple)-bases;			// get the index in Bases of where this character appears
 		if(!(index>=0 && index<(int)strlen(bases)))		// it should be within range
 		{
-			printf("index=%d bases=%d char=%c\n",index,(int)strlen(bases),tuple);
+			printf("index=%d bases=%d char=%c\n",index,(int)strlen(bases),*tuple);
 			assert(0);
 		}
 		assert((index & BASE_MASK(bases)) == index);			// it shouldn't have any extra bits
@@ -257,14 +257,14 @@ DotStore *doComparison(unsigned int **tables, const char *tablesequence, const c
 	assert(mismatch<=window);
 	assert(window>=ktuplesize);
 
-	printf("doComparison(): tableseq=%d newseq=%d bases=%d\n",strlen(tablesequence),strlen(newsequence),strlen(bases));
+	printf("doComparison(): tableseq=%d newseq=%d bases=%d\n",(int)strlen(tablesequence),(int)strlen(newsequence),(int)strlen(bases));
 
 	unsigned int *C, *D;
 	DotStore *dotstore=new DotStore();
 	C=tables[0];
 	D=tables[1];
 
-	int newseqlen=strlen(newsequence);
+	int newseqlen=(int)strlen(newsequence);
 	assert(newseqlen>0);
 
 	int darraysize=newseqlen-ktuplesize+1;
@@ -405,7 +405,8 @@ DotStore *makeDotComparisonByTranslation(const char *seq1, const char *seq2, int
 }
 
 /*************************************************
-** From here on is lbdot derivative code
+** From here on is lbdot derivative code 
+** but modified to fit our framework
  ************************************************/
 
 #define DNAOrder       4
@@ -454,7 +455,7 @@ int v[64], sv;
 
 	d[0]=0;
 	for(i=0;i<L;i++) {
-		d[i+1]=dnacode[seq[p1+i]];
+		d[i+1]=dnacode[(int)seq[p1+i]];
 	}
 	L-=nm;
 
@@ -494,7 +495,7 @@ int *stat=new int[sv+1];
 
 	d[0]=0; cd[0]=0;
 	for(i=0;i<L;i++) {
-		d[i+1]=dnacode[seq[p1+i]];
+		d[i+1]=dnacode[(int)seq[p1+i]];
 	}
 	L-=nm;
 
@@ -545,7 +546,7 @@ int GetNtCode(const char *seq, int ktup, int intval, const int *v)
 {
 	int i, m=0, c;
 	for (i=0;i<ktup;i++) {
-		c=dnacode[seq[i*intval]]*v[i];
+		c=dnacode[(int)seq[i*intval]]*v[i];
 		if (c<0) return -1;
 		m+=c;
 	}
@@ -555,7 +556,7 @@ int GetNtCode(const char *seq, int ktup, int intval, const int *v)
 void ComplementSeq(char  *a)
 {
 	while (*a) { 
-	  *a=complment_base[*a];
+	  *a=complment_base[(int)*a];
 	  a++;
 	}
 }
