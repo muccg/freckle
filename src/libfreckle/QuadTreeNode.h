@@ -5,7 +5,6 @@
 #include "LinkedListVal.h"
 #include <assert.h>
 #include <stdio.h>
-#include <types.h>
 
 // the type of units for the points
 typedef int Type;
