@@ -6,7 +6,7 @@ CC=gcc
 # LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 
 #CPPFLAGS=-fPIC -Wall -march=opteron
-ARCH = x86
+ARCH = i386
 
 # not debug
 CPPFLAGS=-fPIC -march=$(ARCH) -Wall -m64 -I/usr/include/sys
