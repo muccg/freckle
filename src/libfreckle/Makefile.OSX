@@ -6,11 +6,11 @@ CC=gcc
 # LDFLAGS=-shared -Wl,-soname,test.so -g -pg -lc 
 
 #CPPFLAGS=-fPIC -Wall -march=opteron
-ARCH = opteron
+ARCH = Darwin
 
 # not debug
 CPPFLAGS=-fPIC -march=$(ARCH) -Wall -m64 -I/usr/include/sys
-LDFLAGS=-shared -Wl,-soname,test.so -march=$(ARCH) -Wall -m64
+LDFLAGS=-shared -Wl -march=$(ARCH) -Wall -m64
 
 PARTS=libfreckle.o DotStore.o DotStorageChunk.o DotGrid.o QuadTreeNode.o QuadTree.o
 
