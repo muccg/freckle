@@ -33,6 +33,8 @@ def getfont(filename,size):
 		if len(locations)==0:
 			raise Exception, "Cannot find %s font"%basename
 		
+		print "loc:",locations
+		
 		font=None
 		index=0
 		while font==None:
