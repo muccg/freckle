@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 # PyDotter
@@ -9,7 +10,7 @@
 import sys, getopt
 from Bio import SeqIO
 from numpy import array, zeros, int32
-from PIL import Image, ImageDraw
+import Image, ImageDraw
 from time import time
 
 # switch this to True to get debug messages

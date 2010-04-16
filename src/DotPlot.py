@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 from math import *
 from Bio import SeqIO
 from Bio.Seq import Seq
 from numpy import array, zeros, int32, vstack, hstack
-from PIL import Image, ImageDraw, ImageFont, ImageChops
+import Image, ImageDraw, ImageFont, ImageChops
 from pyfreckle import *
 import os.path
 from time import time
