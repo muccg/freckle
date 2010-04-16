@@ -29,6 +29,7 @@ def getfont(filename,size):
 		#find the font file
 		basename=os.path.basename(filename)
 		locations=locatefile(basename)
+        locations += [".",".."]
 		if len(locations)==0:
 			raise Exception, "Cannot find %s font"%basename
 		
